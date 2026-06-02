@@ -585,12 +585,19 @@ const App = {
       const h = _svgEl.clientHeight || 998;
       clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
     }
+    // Set namespaces (SVG + Inkscape)
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('xmlns:inkscape', 'http://www.inkscape.org/namespaces/inkscape');
+    // Mark toys and drawing layers as Inkscape layers
+    clone.querySelector('#toys-layer')?.setAttribute('inkscape:groupmode', 'layer');
+    clone.querySelector('#drawing-layer')?.setAttribute('inkscape:groupmode', 'layer');
+    // Format filename as tt-{roomId}-YYMMDD.svg
+    const yymmdd = new Date().toISOString().slice(2, 10);
     const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `crdt-svg-${_roomId || 'map'}.svg`;
+    a.download = `tt-${_roomId}-${yymmdd}.svg`;
     a.click();
     URL.revokeObjectURL(url);
     UI.toast('SVG exported');
