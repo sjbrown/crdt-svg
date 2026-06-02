@@ -569,9 +569,64 @@ const App = {
     }
     UI.toast('Undone');
   },
-  exportSVG: () => UI.toast('SVG export — stub'),
-  copyJSON:  () => UI.toast('JSON copy — stub'),
-  importFile:() => UI.toast('Import — stub'),
+  exportSVG: () => {
+    // Clone the live SVG, strip overlay and UI-only layers, then download.
+    const clone = _svgEl.cloneNode(true);
+    clone.removeAttribute('id');
+    // Remove layers that aren't document content
+    ['#overlay-layer', '#draw-preview'].forEach(sel => {
+      clone.querySelector(sel)?.remove();
+    });
+    // Strip pointer-events and other runtime attrs
+    clone.querySelectorAll('[pointer-events]').forEach(el => el.removeAttribute('pointer-events'));
+    // Embed a viewBox if not already set
+    if (!clone.getAttribute('viewBox')) {
+      const w = _svgEl.clientWidth  || 1384;
+      const h = _svgEl.clientHeight || 998;
+      clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    }
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `crdt-svg-${_roomId || 'map'}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+    UI.toast('SVG exported');
+  },
+  importSVG: () => {
+    const input  = document.createElement('input');
+    input.type   = 'file';
+    input.accept = '.svg,image/svg+xml';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const text    = await file.text();
+      const parser  = new DOMParser();
+      const svgDoc  = parser.parseFromString(text, 'image/svg+xml');
+      if (svgDoc.querySelector('parsererror')) {
+        UI.toast('Could not parse SVG', 'warn');
+        return;
+      }
+      const importedTags = Object.keys(SHAPE_TYPES); // ['rect', 'circle']
+      let count = 0;
+      importedTags.forEach(tag => {
+        svgDoc.querySelectorAll(tag).forEach(el => {
+          const attrs = {};
+          for (const at of el.attributes) attrs[at.name] = at.value;
+          attrs.id     = `import-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          attrs.author = _myId;
+          attrs.type   = tag;
+          try { addShape(_ydoc, _yDrawing, _yDrawingMeta, attrs); count++; }
+          catch (_) { /* skip unrecognisable elements */ }
+        });
+      });
+      if (count === 0) UI.toast('No importable shapes found', 'warn');
+      else UI.toast(`Imported ${count} shape${count === 1 ? '' : 's'}`);
+    };
+    input.click();
+  },
 
   addLog: (msg, type='') => {
     const log   = document.getElementById('eventLog')

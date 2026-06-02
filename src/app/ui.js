@@ -262,7 +262,7 @@ const PANEL_TABS = [
 ];
 const PANEL_TITLES = {
   tools:'Properties', peers:'Peers & sharing', history:'History & undo',
-  layers:'Layers', save:'Save / load', gestures:'Gestures & help',
+  layers:'Layers', save:'File', gestures:'Gestures & help',
 };
 
 export function panelTabsHTML(activeId) {
@@ -494,12 +494,16 @@ export function refreshLayerList() {
 
 export function saveBody() {
   return `
-    <div class="field"><label>Save</label>
-      <button class="action-btn" onclick="App.exportSVG()">${icon('download')} Export as SVG</button>
-      <button class="action-btn" onclick="App.copyJSON()">${icon('copy')} Copy document JSON</button>
+    <div class="field"><label>Export</label>
+      <button class="action-btn" onclick="App.exportSVG()">${icon('download')} Export SVG</button>
     </div>
-    <div class="field"><label>Load</label>
-      <button class="action-btn" onclick="App.importFile()">${icon('upload')} Import SVG or JSON</button>
+    <div class="field"><label>Import</label>
+      <button class="action-btn" onclick="App.importSVG()">${icon('upload')} Import SVG</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--text-3);line-height:1.6">
+      <a href="https://developer.mozilla.org/en-US/docs/Web/SVG"
+         target="_blank" rel="noopener"
+         style="color:var(--primary);text-decoration:none;">Why SVG is important ↗</a>
     </div>
     `;
 }
