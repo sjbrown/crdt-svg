@@ -593,12 +593,12 @@ const App = {
     clone.querySelector('#toys-layer')?.setAttribute('inkscape:groupmode', 'layer');
     clone.querySelector('#drawing-layer')?.setAttribute('inkscape:groupmode', 'layer');
     // Format filename as tt-{roomId}-YYMMDD.svg
-    const yymmdd = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `tt-${_roomId}-${yymmdd}.svg`;
+    a.download = `tt-${_roomId}-${dateStr}.svg`;
     a.click();
     URL.revokeObjectURL(url);
     UI.toast('SVG exported');
@@ -610,28 +610,101 @@ const App = {
     input.onchange = async () => {
       const file = input.files[0];
       if (!file) return;
-      const text    = await file.text();
-      const parser  = new DOMParser();
-      const svgDoc  = parser.parseFromString(text, 'image/svg+xml');
+      const text   = await file.text();
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(text, 'image/svg+xml');
       if (svgDoc.querySelector('parsererror')) {
         UI.toast('Could not parse SVG', 'warn');
         return;
       }
-      const importedTags = Object.keys(SHAPE_TYPES); // ['rect', 'circle']
-      let count = 0;
-      importedTags.forEach(tag => {
-        svgDoc.querySelectorAll(tag).forEach(el => {
-          const attrs = {};
-          for (const at of el.attributes) attrs[at.name] = at.value;
-          attrs.id     = `import-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-          attrs.author = _myId;
-          attrs.type   = tag;
-          try { addShape(_ydoc, _yDrawing, _yDrawingMeta, attrs); count++; }
-          catch (_) { /* skip unrecognisable elements */ }
-        });
+
+      // ── DOM element → Y.XmlElement tree ────────────────────────────────
+      // Preserves all attributes (including xlink:href as a plain string key,
+      // which mirror() in shapes.js/toys.js re-hydrates via setAttributeNS).
+      function domToY(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const t = node.textContent.trim();
+          return t ? new Y.XmlText(t) : null;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return null;
+        if (node.localName === 'script') return null; // never
+        const yEl = new Y.XmlElement(node.localName);
+        for (const at of node.attributes) yEl.setAttribute(at.name, at.value);
+        const children = [...node.childNodes].map(domToY).filter(Boolean);
+        if (children.length) yEl.insert(0, children);
+        return yEl;
+      }
+
+      // ── Toy contract: <g class="toy" data-toy-id data-toy-type
+      //                     data-yid data-layer-type="toy"> with ≥1 <svg> child
+      function isToyG(el) {
+        return el.localName === 'g' &&
+               el.classList.contains('toy') &&
+               el.getAttribute('data-toy-id') &&
+               el.getAttribute('data-toy-type') &&
+               el.getAttribute('data-yid') &&
+               el.getAttribute('data-layer-type') === 'toy' &&
+               el.querySelector(':scope > svg');
+      }
+
+      // App-internal layers that are never imported into drawing
+      const SKIP_IDS = new Set([
+        'background-layer', 'boundaries-positions-layer', 'overlay-layer',
+      ]);
+
+      const toysLayerEl = svgDoc.querySelector('#toys-layer');
+      const drawLayerEl = svgDoc.querySelector('#drawing-layer');
+      let toyCount = 0, toyErrors = 0, drawCount = 0;
+
+      _ydoc.transact(() => {
+        // ── Toys layer ─────────────────────────────────────────────────
+        if (toysLayerEl) {
+          const invalid = [];
+          for (const child of toysLayerEl.children) {
+            if (isToyG(child)) {
+              const yG = domToY(child);
+              if (yG) { _yToys.insert(_yToys.length, [yG]); toyCount++; }
+            } else {
+              invalid.push(child);
+              toyErrors++;
+            }
+          }
+          if (invalid.length) {
+            let errLayer = _svgEl.querySelector('#errors-layer');
+            if (!errLayer) {
+              errLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+              errLayer.setAttribute('id', 'errors-layer');
+              _svgEl.appendChild(errLayer);
+            }
+            invalid.forEach(el => errLayer.appendChild(document.importNode(el, true)));
+          }
+        }
+
+        // ── Drawing layer ───────────────────────────────────────────────
+        if (drawLayerEl) {
+          for (const child of drawLayerEl.children) {
+            const yEl = domToY(child);
+            if (yEl) { _yDrawing.insert(_yDrawing.length, [yEl]); drawCount++; }
+          }
+        }
+
+        // ── Everything else → drawing layer ────────────────────────────
+        for (const el of svgDoc.documentElement.children) {
+          const id = el.getAttribute('id') ?? '';
+          if (el.localName === 'defs') continue;
+          if (id === 'toys-layer' || id === 'drawing-layer') continue;
+          if (SKIP_IDS.has(id)) continue;
+          const yEl = domToY(el);
+          if (yEl) { _yDrawing.insert(_yDrawing.length, [yEl]); drawCount++; }
+        }
       });
-      if (count === 0) UI.toast('No importable shapes found', 'warn');
-      else UI.toast(`Imported ${count} shape${count === 1 ? '' : 's'}`);
+
+      const parts = [];
+      if (toyCount)  parts.push(`${toyCount} toy${toyCount === 1 ? '' : 's'}`);
+      if (drawCount) parts.push(`${drawCount} shape${drawCount === 1 ? '' : 's'}`);
+      if (toyErrors) parts.push(`${toyErrors} invalid → errors layer`);
+      if (!parts.length) UI.toast('Nothing importable found', 'warn');
+      else UI.toast(`Imported: ${parts.join(', ')}`);
     };
     input.click();
   },
