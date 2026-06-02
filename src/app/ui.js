@@ -258,7 +258,7 @@ const PANEL_TABS = [
   { id: 'layers',  label: 'Layers',  iconId: 'layers' },
   { id: 'peers',   label: 'Peers',   iconId: 'peers' },
   { id: 'history', label: 'History', iconId: 'history' },
-  { id: 'save',    label: 'Save',    iconId: 'save' },
+  { id: 'save',    label: 'File',    iconId: 'save' },
 ];
 const PANEL_TITLES = {
   tools:'Properties', peers:'Peers & sharing', history:'History & undo',
@@ -501,10 +501,7 @@ export function saveBody() {
     <div class="field"><label>Load</label>
       <button class="action-btn" onclick="App.importFile()">${icon('upload')} Import SVG or JSON</button>
     </div>
-    <div class="field"><label>Auto-save</label>
-      <div class="row-btn"><div style="font-size:14px">Save to IndexedDB</div>
-        <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-    </div>`;
+    `;
 }
 
 export function gesturesBody() {
