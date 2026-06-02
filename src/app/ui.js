@@ -403,7 +403,7 @@ function wireOfflineToggle() {
 export function histBody(history) {
   const rows = history.map((entry, i) => {
     const swatch = entry.fill
-      ? `<span class="sw-chip ${entry.shapeType === 'circle' ? 'circle' : ''}" style="background:${entry.fill};flex-shrink:0"></span>`
+      ? `<span class="sw-chip kind-${entry.shapeType}" style="background:${entry.fill};flex-shrink:0"></span>`
       : `<span class="hist-dot"></span>`;
     return `<div class="hist-item">${swatch}<span style="flex:1">${entry.label}</span>${i === 0 ? '<span class="meta">latest</span>' : ''}</div>`;
   }).join('');
@@ -421,7 +421,7 @@ export function layerObjectListHTML(objects, selectedId) {
   if (!objects?.length)
     return '<div class="layer-obj-empty">No objects</div>';
   return objects.map(o => {
-    const chip = `<span class="sw-chip ${o.kind === 'circle' ? 'circle' : ''}" style="background:${o.fill}"></span>`;
+    const chip = `<span class="sw-chip kind-${o.kind}" style="background:${o.fill}"></span>`;
     const sel  = selectedId === o.id;
     return `<div class="layer-obj-item ${sel ? 'sel' : ''}" data-yid="${o.id}" onclick="App.selectShape('${o.id}')">${chip}<span class="layer-obj-label">${o.label}</span>${sel ? '<span class="meta">selected</span>' : ''}</div>`;
   }).join('');
