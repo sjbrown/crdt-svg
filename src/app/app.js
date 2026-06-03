@@ -506,8 +506,10 @@ const App = {
   commitMove: (id, x, y) => {
     if (!_dragState) return;
     const rx = Math.round(x), ry = Math.round(y);
+    const fromX = _dragState.startX, fromY = _dragState.startY;
     const domEl = _svgEl.querySelector(`[data-yid="${id}"]`);
-    if (layerForElement(domEl) === 'toy') {
+    const isToy = layerForElement(domEl) === 'toy';
+    if (isToy) {
       toyApplyMoveCommit(_ydoc, findToy(_yToys, id), rx, ry);
       // onToysChanged (observeDeep) fires synchronously and calls renderDoc().
     } else {
@@ -516,6 +518,11 @@ const App = {
       // trigger onDrawingChanged, so we must call renderDoc() explicitly here.
       renderDoc();
     }
+    _undoStack.push({ op: 'move', id, isToy, fromX, fromY, toX: rx, toY: ry });
+    addHistory(`moved ${id.slice(0, 6)} → (${rx}, ${ry})`, {
+      fill: domEl?.getAttribute('fill'),
+      shapeType: isToy ? 'toy' : domEl?.nodeName,
+    });
     Overlay.endDragPlaceholder(id);
     _awareness.setLocalStateField('drag', null);
     _dragState = null;
@@ -594,10 +601,21 @@ const App = {
     if (!op) { UI.toast('Nothing to undo', 'warn'); return; }
     if (op.op === 'add') {
       deleteShape(_ydoc, _yDrawing, _yDrawingMeta, op.id);
+      addHistory(`undid: add ${op.id.slice(0, 6)}`);
     } else if (op.op === 'del') {
       addShape(_ydoc, _yDrawing, _yDrawingMeta, { ...op.attrs, ...op.meta, id: op.attrs.id });
+      addHistory(`undid: delete ${op.attrs.id.slice(0, 6)}`, { fill: op.attrs.fill, shapeType: op.attrs.type });
     } else if (op.op === 'add-toy') {
       deleteToy(_ydoc, _yToys, _yToyMeta, op.id);
+      addHistory(`undid: add toy ${op.id.slice(0, 6)}`, { shapeType: 'toy' });
+    } else if (op.op === 'move') {
+      if (op.isToy) {
+        toyApplyMoveCommit(_ydoc, findToy(_yToys, op.id), op.fromX, op.fromY);
+      } else {
+        shapeApplyMoveCommit(_ydoc, findShape(_yDrawing, op.id), op.fromX, op.fromY);
+        renderDoc();
+      }
+      addHistory(`undid: move ${op.id.slice(0, 6)} → (${op.fromX}, ${op.fromY})`);
     }
     UI.toast('Undone');
   },
@@ -621,6 +639,7 @@ const App = {
 function addHistory(label, meta = {}) {
   _historyLog.unshift({ label, ts: Date.now(), fill: meta.fill, shapeType: meta.shapeType });
   if (_historyLog.length > 40) _historyLog.pop();
+  UI.refreshFromDoc();
 }
 
 // ── Keyboard shortcuts ────────────────────────────────────────────────────────
