@@ -316,6 +316,8 @@ function gatherToolsData() {
     tools:      App.getTools(layer),
     palette:    App.getPalette(),
     fill:       App.getToolParams(UIData.activeTool)?.fill,
+    background: App.getBackground(),
+    defaultBackgrounds: App.getDefaultBackgrounds(),
   };
 }
 function gatherPeersData() {
@@ -332,8 +334,8 @@ function gatherLayersData() {
 
 // -- Pure body builders --------------------------------------------------------
 function bgToolsBody(data) {
-  const bg = App.getBackground();
-  const presets = App.getDefaultBackgrounds().map(p => `
+  const bg = data.background;
+  const presets = data.defaultBackgrounds.map(p => `
     <div class="bg-preset" onclick="UI.applyBackgroundPreset('${p.url}', ${p.width}, ${p.height})"
          title="${p.label}">
       <img src="${p.url}" alt="${p.label}"/>
