@@ -333,6 +333,12 @@ function gatherLayersData() {
 // -- Pure body builders --------------------------------------------------------
 function bgToolsBody(data) {
   const bg = App.getBackground();
+  const presets = App.getDefaultBackgrounds().map(p => `
+    <div class="bg-preset" onclick="UI.applyBackgroundPreset('${p.url}', ${p.width}, ${p.height})"
+         title="${p.label}">
+      <img src="${p.url}" alt="${p.label}"/>
+      <span>${p.label}</span>
+    </div>`).join('');
   return `
     <div class="field">
       <label>Background image URL</label>
@@ -355,7 +361,19 @@ function bgToolsBody(data) {
             style="width:100%;font-size:12px;font-family:ui-monospace,monospace"/>
         </label>
       </div>
+    </div>
+    <div class="field">
+      <label>Presets</label>
+      <div class="bg-preset-grid">${presets}</div>
     </div>`;
+}
+
+export function applyBackgroundPreset(url, width, height) {
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.value = val; };
+  el('bgUrlInput',    url);
+  el('bgWidthInput',  width);
+  el('bgHeightInput', height);
+  App.setBackground({ url, width, height });
 }
 
 function defaultToolsBody(data) {

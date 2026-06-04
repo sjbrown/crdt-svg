@@ -46,6 +46,13 @@ import * as Y from 'yjs';
 const svgNS = 'http://www.w3.org/2000/svg'
 const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
+const DEFAULT_BACKGROUNDS = [
+  { label: 'Slate Hex',   url: 'img/bg_slatehex.png',  width: 1384, height: 998 },
+  { label: 'Beige Hex',   url: 'img/bg_beigehex.png',  width: 815,  height: 718 },
+  { label: 'Green Felt',  url: 'img/bg_greenfelt.png', width: 800,  height: 600 },
+  { label: 'Iron Grid',   url: 'img/bg_irongrid.png',  width: 438,  height: 285 },
+];
+
 
 // ── Internal app state ────────────────────────────────────────────────────────
 let _ydoc, _yMeta, _yToys, _yToyMeta, _yDrawing, _yDrawingMeta, _awareness, _provider;
@@ -656,6 +663,7 @@ const App = {
     while (log.children.length > 40) log.lastChild.remove()
   },
 
+  getDefaultBackgrounds: () => DEFAULT_BACKGROUNDS,
   getBackground:   () => ({
     url:    _yMeta.get('bg_url')    ?? '',
     width:  _yMeta.get('bg_width')  ?? 1384,
