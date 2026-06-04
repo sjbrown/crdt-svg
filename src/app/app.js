@@ -98,11 +98,17 @@ const PALETTE = ['#c8941e','#5a7ea8','#8a5ea8','#5ea88a','#a85e5e','#a8905e','#5
 
 export function makeDoc() {
   const ydoc       = new Y.Doc();
-  const yMeta      = ydoc.getMap('meta');
   const yToys      = ydoc.getXmlFragment('toys');
   const yToyMeta   = ydoc.getMap('toyMeta');
   const yDrawing   = ydoc.getXmlFragment('shapes');
   const yDrawingMeta = ydoc.getMap('shapeMeta');
+  const yMeta      = ydoc.getMap('meta');
+  // Seed default background if doc is brand new
+  if (!yMeta.get('bg_url')) {
+    yMeta.set('bg_url',    'img/bg_slatehex.png');
+    yMeta.set('bg_width',  1384);
+    yMeta.set('bg_height', 998);
+  }
   return { ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta };
 }
 
@@ -148,6 +154,7 @@ export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awa
   _yDrawing.observeDeep(onDrawingChanged);
   _yToys.observe(onDocChanged);
   _yDrawing.observe(onDocChanged);
+  _yMeta.observe(onMetaChanged);
   _awareness.on('change', onPresenceChanged);
 
   // 7. Provider status
@@ -170,6 +177,7 @@ export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awa
 
 // ── Render pipelines ──────────────────────────────────────────────────────────
 function renderDoc() {
+  renderBackgroundLayer();
   renderBoundariesPositionsLayer();
   renderToysLayer();
   renderDrawingLayer();
@@ -647,6 +655,20 @@ const App = {
     log.prepend(entry)
     while (log.children.length > 40) log.lastChild.remove()
   },
+
+  getBackground:   () => ({
+    url:    _yMeta.get('bg_url')    ?? '',
+    width:  _yMeta.get('bg_width')  ?? 1384,
+    height: _yMeta.get('bg_height') ?? 998,
+  }),
+  setBackground:   (attrs) => {
+    let url = attrs.url ?? 'img/bg_slatehex.png';
+    _ydoc.transact(() => {
+      _yMeta.set('bg_url',    url);
+      _yMeta.set('bg_width',  attrs.width  ?? 1384);
+      _yMeta.set('bg_height', attrs.height ?? 998);
+    });
+  },
 };
 
 // ── History log ───────────────────────────────────────────────────────────────
@@ -666,5 +688,49 @@ function onKeyDown(e) {
   if ((e.key === 'Delete' || e.key === 'Backspace') && _selectedId) App.deleteSelected();
   if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); App.undo(); }
 }
+
+function onMetaChanged() {
+  renderBackgroundLayer();
+  UI.refreshFromDoc();
+}
+
+function renderBackgroundLayer() {
+  const layer = _svgEl.querySelector('#background-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  const url    = _yMeta.get('bg_url');
+  const width  = _yMeta.get('bg_width');
+  const height = _yMeta.get('bg_height');
+  if (!url) return;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  // Tiling pattern so the image repeats across infinite canvas
+  const defs    = _svgEl.querySelector('defs');
+  // Remove stale bg pattern if present
+  defs.querySelector('#bg-pattern')?.remove();
+  const pattern = document.createElementNS(SVGNS, 'pattern');
+  pattern.setAttribute('id',           'bg-pattern');
+  pattern.setAttribute('x',            '0');
+  pattern.setAttribute('y',            '0');
+  pattern.setAttribute('width',        width);
+  pattern.setAttribute('height',       height);
+  pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+  const img = document.createElementNS(SVGNS, 'image');
+  img.setAttribute('href',   url);
+  img.setAttribute('x',      '0');
+  img.setAttribute('y',      '0');
+  img.setAttribute('width',  width);
+  img.setAttribute('height', height);
+  pattern.appendChild(img);
+  defs.appendChild(pattern);
+  const rect = document.createElementNS(SVGNS, 'rect');
+  rect.setAttribute('x',              '0');
+  rect.setAttribute('y',              '0');
+  rect.setAttribute('width',          '100%');
+  rect.setAttribute('height',         '100%');
+  rect.setAttribute('fill',           'url(#bg-pattern)');
+  rect.setAttribute('pointer-events', 'none');
+  layer.appendChild(rect);
+}
+
 
 export { App };

@@ -332,14 +332,35 @@ function gatherLayersData() {
 
 // -- Pure body builders --------------------------------------------------------
 export function toolsBody(data) {
+  console.log(data.layer)
+  const bgSection = data.layer === 'background' ? `
+    <div class="field">
+      <label>Background image URL</label>
+      <input type="url" class="text-input" id="bgUrlInput"
+        value="${App.getBackground().url}"
+        placeholder="https://… or img/bg_slatehex.png"
+        onchange="App.setBackground({url: this.value})"
+        style="width:100%;font-size:12px;font-family:ui-monospace,monospace"/>
+      <input type="number" class="text-input" id="bgWidthInput"
+        value="${App.getBackground().width}"
+        onchange="App.setBackground({width: this.value})"
+        style="width:100%;font-size:12px;font-family:ui-monospace,monospace"/>
+      <input type="number" class="text-input" id="bgHeightInput"
+        value="${App.getBackground().height}"
+        onchange="App.setBackground({height: this.value})"
+        style="width:100%;font-size:12px;font-family:ui-monospace,monospace"/>
+    </div>` : '';
+  
   const toolBtn = t =>
     `<div class="tool ${data.activeTool === t.name ? 'active' : ''}" onclick="App.setTool('${t.name}')">${t.icon}<span>${t.label}</span></div>`;
   const sw = c =>
     `<div class="sw ${data.fill === c ? 'active' : ''}" style="background:${c}" onclick="App.setFill('${c}');UI.openSheet('tools')"></div>`;
+
   return `
     <div class="field"><label>Tool · ${data.layer} layer</label>
       <div class="tool-grid">${data.tools.map(toolBtn).join('')}</div>
     </div>
+    ${bgSection}
     <div class="field"><label>Fill color</label>
       <div class="swatches">${data.palette.map(sw).join('')}</div>
     </div>`;
