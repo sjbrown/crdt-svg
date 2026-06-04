@@ -6,7 +6,7 @@
  *
  * Roles:
  *   - Initialise all modules and inject this bus object as their sole dependency
- *   - Translate canvas events → CRDT writes (via shapes.js)
+ *   - Translate canvas events → CRDT writes
  *   - Translate CRDT/awareness changes → render calls
  *   - Answer read queries from ui.js and overlay.js
  *   - Maintain the undo stack (since it spans canvas + shapes)
