@@ -662,11 +662,10 @@ const App = {
     height: _yMeta.get('bg_height') ?? 998,
   }),
   setBackground:   (attrs) => {
-    let url = attrs.url ?? 'img/bg_slatehex.png';
     _ydoc.transact(() => {
-      _yMeta.set('bg_url',    url);
-      _yMeta.set('bg_width',  attrs.width  ?? 1384);
-      _yMeta.set('bg_height', attrs.height ?? 998);
+      if (attrs.url    !== undefined) _yMeta.set('bg_url',    attrs.url);
+      if (attrs.width  !== undefined) _yMeta.set('bg_width',  Number(attrs.width));
+      if (attrs.height !== undefined) _yMeta.set('bg_height', Number(attrs.height));
     });
   },
 };
