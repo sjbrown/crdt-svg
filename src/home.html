@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crdt-svg · Tabletop Tables</title>
+<link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Ctext x='3' y='26' font-size='26' fill='%23fffff0' font-family='serif' letter-spacing='-5'%3ETT%3C/text%3E%3C/svg%3E">
+<style>
+/* ── Variables (matches ui.css palette) ─────────────────── */
+:root {
+  --bg:            #0d0b13;
+  --surface:       rgba(22, 17, 34, 0.88);
+  --surface-2:     rgba(36, 29, 52, 0.75);
+  --surface-solid: #1a1228;
+  --text:          #ddd0b4;
+  --text-2:        #8a7d68;
+  --text-3:        #4e4438;
+  --border:        rgba(210,185,130,0.13);
+  --border-2:      rgba(210,185,130,0.26);
+  --primary:       #c8941e;
+  --primary-soft:  rgba(200,148,30,0.20);
+  --radius:        14px;
+  --radius-sm:     10px;
+  --emboss:
+    inset 0 2px 0 rgba(210,185,130,0.40),
+    inset 0 -1px 0 rgba(0,0,0,0.55),
+    0 0 0 1px rgba(0,0,0,0.70),
+    0 4px 18px rgba(0,0,0,0.55);
+  --emboss-lg:
+    inset 0 2px 0 rgba(210,185,130,0.40),
+    inset 0 -1px 0 rgba(0,0,0,0.55),
+    0 0 0 1px rgba(0,0,0,0.80),
+    0 12px 40px rgba(0,0,0,0.70);
+  --font-body:    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+}
+
+/* ── Left Panel ──────────────────────────────────────────── */
+.panel {
+  background: var(--surface-solid);
+  border-right: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 40px;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+@media (max-width: 768px) {
+  .panel {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-2);
+    padding: 28px 20px 32px;
+  }
+}
+
+/* ── Wordmark ──────────────────────────────────────────────  */
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wordmark-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin: 0;
+  line-height: 1;
+}
+
+.wordmark-title span {
+  color: var(--primary);
+}
+
+.wordmark-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Section headings ──────────────────────────────────────  */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+}
+
+/* ── Profile card ──────────────────────────────────────────  */
+.profile-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--emboss);
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gradient-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--border-2);
+  cursor: pointer;
+  transition: transform 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.gradient-swatch:hover { transform: scale(1.08); }
+
+.profile-name-input {
+  flex: 1;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.profile-name-input:focus {
+  border-color: var(--primary);
+}
+.profile-name-input::placeholder { color: var(--text-3); font-style: italic; }
+
+/* gradient picker row */
+.gradient-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.grad-option {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.grad-option:hover { transform: scale(1.15); }
+.grad-option.active { border-color: var(--primary); }
+
+/* ── Tables list ───────────────────────────────────────────  */
+.tables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  text-decoration: none;
+  color: inherit;
+}
+.table-row:hover {
+  background: var(--primary-soft);
+  border-color: var(--border-2);
+}
+
+.table-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.table-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+.table-date {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.tables-empty {
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+  padding: 6px 2px;
+}
+
+/* ── Links footer ──────────────────────────────────────────  */
+.panel-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color 0.12s;
+}
+.footer-link:hover { color: var(--primary); }
+.footer-link svg { flex-shrink: 0; opacity: 0.7; }
+
+.footer-tagline {
+  font-size: 10px;
+  color: var(--text-3);
+  line-height: 1.5;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Sampler (right) ───────────────────────────────────────  */
+.sampler {
+  display: flex;
+  flex-direction: column;
+}
+
+.sampler-row {
+  position: relative;
+  flex: 1;
+  min-height: 200px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .sampler-row { min-height: 180px; }
+}
+
+.sampler-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.4s ease;
+}
+.sampler-row:hover .sampler-bg { transform: scale(1.03); }
+
+.sampler-tint {
+  position: absolute;
+  inset: 0;
+  transition: background 0.3s;
+}
+.sampler-row:hover .sampler-tint {
+  background: rgba(200, 148, 30, 0.06) !important;
+}
+
+/* dice strip */
+.sampler-dice {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 60px;
+  pointer-events: none;
+}
+
+.die-wrapper {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7));
+  opacity: 0.92;
+  transform: translateY(0);
+  animation: float-die var(--float-dur, 3s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes float-die {
+  0%, 100% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
+  50%       { transform: translateY(-6px) rotate(var(--rot, 0deg)); }
+}
+
+/* start button */
+.start-btn {
+  position: relative;
+  z-index: 2;
+  background: rgba(14, 10, 22, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(200,148,30,0.55);
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  padding: 11px 28px;
+  border-radius: 40px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(210,185,130,0.30),
+    0 0 0 1px rgba(0,0,0,0.6),
+    0 8px 30px rgba(0,0,0,0.6),
+    0 0 20px rgba(200,148,30,0.10);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s, color 0.15s;
+  white-space: nowrap;
+}
+.start-btn:hover {
+  background: rgba(200,148,30,0.18);
+  color: #e8b84a;
+  box-shadow:
+    inset 0 1px 0 rgba(210,185,130,0.40),
+    0 0 0 1px rgba(200,148,30,0.45),
+    0 0 24px rgba(200,148,30,0.25),
+    0 8px 30px rgba(0,0,0,0.6);
+  transform: scale(1.04);
+}
+.start-btn:active { transform: scale(0.97); }
+
+/* separator lines between rows */
+.sampler-row + .sampler-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(210,185,130,0.12);
+  z-index: 1;
+}
+
+/* ── Ripple / transition overlay ───────────────────────────  */
+#ripple {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+#ripple-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--bg);
+  transform: scale(0);
+  transform-origin: center;
+  transition: none;
+  width: 10px;
+  height: 10px;
+}
+
+/* ── Scroll fade-ins ───────────────────────────────────────  */
+.fade-in {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Ripple overlay ──────────────────────────────────────── -->
+<div id="ripple"><div id="ripple-circle"></div></div>
+
+<!-- ── Layout ─────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- Left panel -->
+  <aside class="panel">
+
+    <div class="wordmark fade-in">
+      <h1 class="wordmark-title">crdt<span>-svg</span></h1>
+      <div class="wordmark-sub">Collaborative Tabletop Tables</div>
+    </div>
+
+    <!-- Profile -->
+    <div class="fade-in" style="transition-delay:0.06s">
+      <p class="section-label">Your Identity</p>
+      <div class="profile-card">
+        <div class="profile-row">
+          <canvas class="gradient-swatch" id="gradientSwatch" width="36" height="36" title="Click to randomize gradient"></canvas>
+          <input class="profile-name-input" id="displayName" type="text" placeholder="Traveller's name…" maxlength="32" autocomplete="off">
+        </div>
+        <div class="gradient-options" id="gradientOptions"></div>
+      </div>
+    </div>
+
+    <!-- Previous tables -->
+    <div class="fade-in" style="transition-delay:0.12s">
+      <p class="section-label">Your Tables</p>
+      <div class="tables-list" id="tablesList">
+        <div class="tables-empty">No previous tables yet.<br>Start one from the right →</div>
+      </div>
+    </div>
+
+    <!-- Footer links -->
+    <div class="panel-footer fade-in" style="transition-delay:0.18s">
+      <a href="https://github.com/sjbrown/crdt-svg" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.09.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.268 2.75 1.026A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+        </svg>
+        GitHub · sjbrown/crdt-svg
+      </a>
+      <a href="https://github.com/sjbrown/crdt-svg/blob/main/ROADMAP.md" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Roadmap
+      </a>
+      <p class="footer-tagline">
+        Local-first · Peer-to-peer · No accounts · No tracking<br>
+        Open source · Public domain spirit
+      </p>
+    </div>
+
+  </aside>
+
+  <!-- Right sampler -->
+  <main class="sampler" id="sampler">
+    <!-- Rows injected by JS -->
+  </main>
+
+</div>
+
+<script>
+// ── Gradient generation (FNV-1a, matches entity_gradient.js) ──────────────
+function hash32(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h;
+}
+
+function entityGradient(name, lumAnchor = 40, satAnchor = 100) {
+  const h1 = hash32(name);
+  const h2 = hash32(name + '__stop2');
+  const h3 = hash32(name + '__lum1');
+  const h4 = hash32(name + '__lum2');
+  const h5 = hash32(name + '__sat1');
+  const h6 = hash32(name + '__sat2');
+  const h7 = hash32(name + '__angle');
+
+  const hue1 = h1 % 360;
+  const hueDelta = (h2 % 81) - 40;
+  const hue2 = ((hue1 + hueDelta) % 360 + 360) % 360;
+
+  const lumMin = Math.max(0, lumAnchor - 20);
+  const lumMax = Math.min(100, lumAnchor + 20);
+  const lumSteps = [];
+  for (let v = lumMin; v <= lumMax; v += 5) lumSteps.push(v);
+
+  const satMin = Math.max(0, satAnchor - 20);
+  const satMax = Math.min(100, satAnchor + 20);
+  const satSteps = [];
+  for (let v = satMin; v <= satMax; v += 5) satSteps.push(v);
+
+  const lum1 = lumSteps[h3 % lumSteps.length];
+  const lum2 = lumSteps[h4 % lumSteps.length];
+  const sat1 = satSteps[h5 % satSteps.length];
+  const sat2 = satSteps[h6 % satSteps.length];
+  const angles = [0,45,90,135];
+  const angle = angles[h7 % angles.length];
+
+  const c1 = `hsl(${hue1},${sat1}%,${lum1}%)`;
+  const c2 = `hsl(${hue2},${sat2}%,${lum2}%)`;
+  const grad = `linear-gradient(${angle}deg, ${c1}, ${c2})`;
+  return { grad, c1, c2, hue1, hue2, sat1, sat2, lum1, lum2, angle };
+}
+
+function drawGradientSwatch(canvas, name) {
+  const ctx = canvas.getContext('2d');
+  const g = entityGradient(name);
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, g.c1);
+  grad.addColorStop(1, g.c2);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  return g;
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'crdt_svg_profile';
+const TABLES_KEY  = 'crdt_svg_tables';
+
+function loadProfile() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveProfile(p) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch {}
+}
+function loadTables() {
+  try { return JSON.parse(localStorage.getItem(TABLES_KEY)) || []; } catch { return []; }
+}
+
+// ── Profile UI ────────────────────────────────────────────────────────────
+const PRESET_NAMES = [
+  'Seraphine','Aldric','Morrigan','Kestrel','Voss','Tamsin',
+  'Draven','Isolde','Cade','Riven'
+];
+
+let profile = loadProfile();
+if (!profile.name) profile.name = '';
+if (!profile.gradSeed) profile.gradSeed = profile.name || 'default_' + Date.now();
+
+const displayNameEl = document.getElementById('displayName');
+const swatchEl      = document.getElementById('gradientSwatch');
+const gradOptsEl    = document.getElementById('gradientOptions');
+
+displayNameEl.value = profile.name;
+
+function refreshSwatch() {
+  const seed = profile.gradSeed || profile.name || 'anonymous';
+  drawGradientSwatch(swatchEl, seed);
+}
+refreshSwatch();
+
+// Preset gradient dots
+PRESET_NAMES.forEach(n => {
+  const c = document.createElement('canvas');
+  c.className = 'grad-option';
+  c.width = 26; c.height = 26;
+  if (n === profile.gradSeed) c.classList.add('active');
+  drawGradientSwatch(c, n);
+  c.title = n;
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    profile.gradSeed = n;
+    saveProfile(profile);
+    refreshSwatch();
+  });
+  gradOptsEl.appendChild(c);
+});
+
+swatchEl.addEventListener('click', () => {
+  const seed = 'rng_' + Math.random().toString(36).slice(2);
+  profile.gradSeed = seed;
+  document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
+  saveProfile(profile);
+  refreshSwatch();
+});
+
+displayNameEl.addEventListener('input', () => {
+  profile.name = displayNameEl.value.trim();
+  saveProfile(profile);
+});
+
+// ── Previous tables ───────────────────────────────────────────────────────
+function renderTables() {
+  const list = loadTables();
+  const el   = document.getElementById('tablesList');
+  if (!list.length) {
+    el.innerHTML = '<div class="tables-empty">No previous tables yet.<br>Start one from the right →</div>';
+    return;
+  }
+  el.innerHTML = '';
+  list.slice().reverse().forEach(t => {
+    const a = document.createElement('a');
+    a.className = 'table-row';
+    a.href = `index.html?room=${encodeURIComponent(t.id)}&bg=${encodeURIComponent(t.bg)}`;
+
+    const g = entityGradient(t.id);
+    const dot = document.createElement('canvas');
+    dot.className = 'table-dot';
+    dot.width = 10; dot.height = 10;
+    const ctx = dot.getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,10,10);
+    grad.addColorStop(0, g.c1);
+    grad.addColorStop(1, g.c2);
+    ctx.beginPath();
+    ctx.arc(5,5,5,0,Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    const name = document.createElement('span');
+    name.className = 'table-name';
+    name.textContent = t.name || `Table #${t.id.slice(-6)}`;
+
+    const date = document.createElement('span');
+    date.className = 'table-date';
+    date.textContent = new Date(t.lastVisit).toLocaleDateString();
+
+    a.append(dot, name, date);
+    el.appendChild(a);
+  });
+}
+renderTables();
+
+// ── D6 SVG builder ────────────────────────────────────────────────────────
+function makeDie(value, recolor) {
+  // Simplified inline d6 SVG (matches the toy's structure, non-interactive)
+  const [r, g, b] = recolor;
+  // Build a grayscale→color matrix
+  // We tint the gray body to the given color
+  const rf = (r/255).toFixed(3), gf = (g/255).toFixed(3), bf = (b/255).toFixed(3);
+  const matrix = `${rf} 0 0 0 0  ${gf} 0 0 0 0  ${bf} 0 0 0 0  0 0 0 1 0`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="80" viewBox="0 0 80 100">
+  <defs>
+    <filter id="col-${value}-${r}">
+      <feColorMatrix type="matrix" values="${matrix}"/>
+    </filter>
+    <linearGradient id="lg-${value}-${r}" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000" stop-opacity="1"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+  <g filter="url(#col-${value}-${r})">
+    <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+    <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+    <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#lg-${value}-${r});stroke-width:1.31;stroke-linejoin:round"/>
+  </g>
+  <text x="${value >= 10 ? 12 : 24}" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">${value}</text>
+</svg>`;
+}
+
+// ── Sampler rows ──────────────────────────────────────────────────────────
+const ROWS = [
+  {
+    bg: 'slatehex',  label: 'Slate Hex',
+    tint: 'rgba(13,11,19,0.45)',
+    values: [6,4,1,5],
+    colors: [
+      [25,  30, 120],   // deep navy
+      [60,  20, 160],   // dark purple
+      [10,  10,  90],   // midnight blue
+      [90,  40, 180],   // violet
+    ],
+  },
+  {
+    bg: 'beigehex',  label: 'Beige Hex',
+    tint: 'rgba(30,22,10,0.40)',
+    values: [3,6,2,4],
+    colors: [
+      [240, 230, 200],  // ivory
+      [240, 230, 200],
+      [240, 230, 200],
+      [240, 230, 200],
+    ],
+  },
+  {
+    bg: 'greenfelt', label: 'Green Felt',
+    tint: 'rgba(8,20,10,0.38)',
+    values: [1,3,5,2],
+    colors: [
+      [190,  20,  20],  // bold red
+      [190,  20,  20],
+      [190,  20,  20],
+      [190,  20,  20],
+    ],
+  },
+  {
+    bg: 'irongrid',  label: 'Iron Grid',
+    tint: 'rgba(10,12,16,0.50)',
+    values: [5,2,6,3],
+    colors: [
+      [100,  30, 160],  // purple
+      [ 30, 130,  60],  // green
+      [110,  65,  20],  // brown
+      [130, 130, 140],  // gray
+    ],
+  },
+];
+
+const rotations = [-8, 4, -3, 9];
+const floatDurs = [3.2, 3.8, 2.9, 3.5];
+const delays    = [0, 0.7, 0.4, 1.1];
+
+const sampler = document.getElementById('sampler');
+
+ROWS.forEach((row, ri) => {
+  const div = document.createElement('div');
+  div.className = 'sampler-row fade-in';
+  div.style.transitionDelay = `${0.05 + ri * 0.07}s`;
+
+  const bgDiv = document.createElement('div');
+  bgDiv.className = 'sampler-bg';
+  bgDiv.style.backgroundImage = `url('img/bg_${row.bg}.png')`;
+
+  const tintDiv = document.createElement('div');
+  tintDiv.className = 'sampler-tint';
+  tintDiv.style.background = row.tint;
+
+  const diceDiv = document.createElement('div');
+  diceDiv.className = 'sampler-dice';
+
+  row.values.forEach((val, di) => {
+    const rgb = row.colors[di];
+    const wrapper = document.createElement('div');
+    wrapper.className = 'die-wrapper';
+    wrapper.style.setProperty('--rot', `${rotations[di]}deg`);
+    wrapper.style.setProperty('--float-dur', `${floatDurs[di]}s`);
+    wrapper.style.setProperty('--float-delay', `${delays[di]}s`);
+    wrapper.innerHTML = makeDie(val, rgb);
+    diceDiv.appendChild(wrapper);
+  });
+
+  const btn = document.createElement('button');
+  btn.className = 'start-btn';
+  btn.textContent = 'Start Here';
+
+  div.append(bgDiv, tintDiv, diceDiv, btn);
+  sampler.appendChild(div);
+
+  // Click handler: ripple transition → navigate
+  function startTable(e) {
+    const x = e ? e.clientX : window.innerWidth / 2;
+    const y = e ? e.clientY : window.innerHeight / 2;
+    launchRipple(x, y, row.bg, row.values);
+  }
+  btn.addEventListener('click', startTable);
+  // Don't let the row itself trigger if only bg clicked (only btn triggers)
+});
+
+// ── Ripple transition ─────────────────────────────────────────────────────
+function launchRipple(cx, cy, bg, diceValues) {
+  const ripple = document.getElementById('ripple');
+  const circle = document.getElementById('ripple-circle');
+
+  // Compute size needed to fill the screen from click point
+  const maxDist = Math.hypot(
+    Math.max(cx, window.innerWidth - cx),
+    Math.max(cy, window.innerHeight - cy)
+  );
+  const diameter = maxDist * 2.2;
+
+  circle.style.transition = 'none';
+  circle.style.width  = diameter + 'px';
+  circle.style.height = diameter + 'px';
+  circle.style.left   = (cx - diameter/2) + 'px';
+  circle.style.top    = (cy - diameter/2) + 'px';
+  circle.style.transform = 'scale(0)';
+  circle.style.borderRadius = '50%';
+
+  // Force reflow
+  circle.getBoundingClientRect();
+
+  circle.style.transition = 'transform 0.55s cubic-bezier(0.4,0,0.2,1)';
+  circle.style.transform  = 'scale(1)';
+
+  // Record table visit
+  recordTableVisit(bg, diceValues);
+
+  setTimeout(() => {
+    // Build URL params
+    const params = new URLSearchParams({
+      bg,
+      dice: diceValues.join(','),
+    });
+    window.location.href = `index.html?${params}`;
+  }, 520);
+}
+
+function generateRoomId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length: 8}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function recordTableVisit(bg, diceValues) {
+  const tables = loadTables();
+  const id = generateRoomId();
+  tables.push({
+    id,
+    bg,
+    diceValues,
+    name: `Table #${id.slice(-4).toUpperCase()}`,
+    lastVisit: Date.now(),
+  });
+  // Keep only last 20
+  if (tables.length > 20) tables.splice(0, tables.length - 20);
+  try { localStorage.setItem(TABLES_KEY, JSON.stringify(tables)); } catch {}
+}
+
+// ── Intersection observer for fade-ins ───────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.05 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
