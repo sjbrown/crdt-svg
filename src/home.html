@@ -442,7 +442,7 @@ body {
       <div class="profile-card">
         <div class="profile-row">
           <canvas class="gradient-swatch" id="gradientSwatch" width="36" height="36" title="Click to randomize gradient"></canvas>
-          <input class="profile-name-input" id="displayName" type="text" placeholder="Traveller's name…" maxlength="32" autocomplete="off">
+          <input class="profile-name-input" id="displayName" type="text" maxlength="32" autocomplete="off">
         </div>
         <div class="gradient-options" id="gradientOptions"></div>
       </div>
@@ -568,8 +568,21 @@ const PRESET_NAMES = [
 ];
 
 let profile = loadProfile();
-if (!profile.name) profile.name = '';
+const ADJS = ['Wily','Deadly','Gaunt','Sallow','Brazen','Vexed','Hollow','Sullen','Grim','Feral',
+  'Ashen','Dread','Craven','Stout','Wroth','Sunken','Brash','Pallid','Sly','Gnarled',
+  'Bleak','Rusted','Sworn','Cursed','Rabid','Silent','Haunted','Gravel','Ireful','Knave'];
+const NAMES = ['Frodo','Xorn','Marda','Vex','Quill','Thane','Osric','Yeva','Drask','Noor',
+  'Helgen','Zuko','Cavel','Brix','Ilsa','Morwen','Sable','Fenrick','Taza','Gorim',
+  'Ulrik','Pell','Dagna','Wren','Jarrek','Chyst','Odra','Byren','Zasha','Rook'];
+function randomName() {
+  const adj  = ADJS[Math.floor(Math.random() * ADJS.length)];
+  const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+  return `${adj} ${name}`;
+}
+
+if (!profile.name) profile.name = randomName();
 if (!profile.gradSeed) profile.gradSeed = profile.name || 'default_' + Date.now();
+saveProfile(profile);
 
 const displayNameEl = document.getElementById('displayName');
 const swatchEl      = document.getElementById('gradientSwatch');
