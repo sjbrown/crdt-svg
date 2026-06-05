@@ -254,9 +254,24 @@ export const CURRENT_SCHEMA = 4;
 const { ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta } = makeDoc();
 
 // ── Persistence ─────────────────────────────────────────────────────────────
+const TABLES_KEY = 'crdt_svg_tables';
+function touchTableRecord(id) {
+  let tables = [];
+  try { tables = JSON.parse(localStorage.getItem(TABLES_KEY)) || []; } catch {}
+  const existing = tables.findIndex(t => t.id === id);
+  if (existing >= 0) {
+    tables[existing].lastVisit = Date.now();
+  } else {
+    tables.push({ id, name: id, lastVisit: Date.now() });
+    if (tables.length > 20) tables.splice(0, tables.length - 20);
+  }
+  try { localStorage.setItem(TABLES_KEY, JSON.stringify(tables)); } catch {}
+}
+
 const persistence = new IndexeddbPersistence(`crdt-svg:${roomId}`, ydoc);
 persistence.on('synced', () => {
   App.addLog('loaded from indexeddb', 'local');
+  touchTableRecord(roomId);
   if (!yMeta.get('docId')) {
     // Brand-new room entered directly (not via home.html). Seed doc metadata;
     // background defaults to slatehex via renderBackgroundLayer() fallback.
