@@ -176,7 +176,11 @@ window.App = App;
 
 // ── Player identity store ────────────────────────────────────────────────────
 // Persistent identity lives in IndexedDB 'crdt-svg-player', store 'identity'.
-// Keys: 'name' (display name), 'grad' (serialised gradient object).
+// Keys:
+//   'name'    — display name string
+//   'grad'    — full entityGradient() output object (stored frozen so gradient
+//               is immune to future changes in entityGradient's algorithm)
+//   'localId' — persistent peer id, format tt-p-v1-DD-XXX
 // home.html writes these via the same store when the profile panel is saved.
 function openPlayerStore() {
   return new Promise((resolve, reject) => {
@@ -201,6 +205,13 @@ async function playerSet(db, key, value) {
   });
 }
 
+function makeLocalId() {
+  const dd   = String(new Date().getDate()).padStart(2, '0');
+  const chars = 'abcdefghijklmnopqrstuvwxyz';
+  const rand  = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `tt-p-v1-${dd}-${rand}`;
+}
+
 async function resolveIdentity() {
   const db = await openPlayerStore();
 
@@ -210,14 +221,21 @@ async function resolveIdentity() {
     await playerSet(db, 'name', name);
   }
 
-  let gradRecord = await playerGet(db, 'grad');
-  if (!gradRecord) {
-    gradRecord = { gradSeed: name };
-    await playerSet(db, 'grad', gradRecord);
+  let grad = await playerGet(db, 'grad');
+  if (!grad || !grad.c1) {
+    // First visit, or upgrading from old { gradSeed } format — compute and freeze.
+    const seed = (typeof grad?.gradSeed === 'string' && grad.gradSeed) ? grad.gradSeed : name;
+    grad = entityGradient(seed);
+    await playerSet(db, 'grad', grad);
   }
 
-  const grad = entityGradient(gradRecord.gradSeed);
-  return { name, grad };
+  let localId = await playerGet(db, 'localId');
+  if (!localId) {
+    localId = makeLocalId();
+    await playerSet(db, 'localId', localId);
+  }
+
+  return { name, grad, localId };
 }
 
 // ── Identity ─────────────────────────────────────────────────────────────────
@@ -225,8 +243,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 let roomId = location.hash.slice(1);
 if (!roomId) { roomId = uid(); location.hash = roomId; }
 
-const { name: myDisplayName, grad: myGrad } = await resolveIdentity();
-const myId = uid();
+const { name: myDisplayName, grad: myGrad, localId: myId } = await resolveIdentity();
 
 document.getElementById('roomLabel').textContent = roomId;
 document.getElementById('myIdLabel').textContent = `me: ${myDisplayName}`;
@@ -236,117 +253,22 @@ export const CURRENT_SCHEMA = 4;
 
 const { ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta } = makeDoc();
 
-// ── Template store helpers ───────────────────────────────────────────────────
-// home.html writes starter SVG docs into 'crdt-svg-templates' IndexedDB.
-// We read them here (once, on new-doc init) and import their toy content.
-function openTemplateStore() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('crdt-svg-templates', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('templates');
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
-
-async function loadTemplate(key) {
-  try {
-    const db  = await openTemplateStore();
-    const tx  = db.transaction('templates', 'readonly');
-    const req = tx.objectStore('templates').get(key);
-    return await new Promise((res, rej) => {
-      req.onsuccess = () => res(req.result ?? null);
-      req.onerror   = () => rej(req.error);
-    });
-  } catch (e) {
-    console.warn('crdt-svg: could not load template', key, e);
-    return null;
-  }
-}
-
-function applyTemplateSVG(svgText) {
-  // Mirrors the domToY + isToyG logic from App.importSVG, but runs at boot
-  // time before the full UI is live, so we operate directly on the Yjs doc.
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-  if (svgDoc.querySelector('parsererror')) {
-    console.warn('crdt-svg: template SVG parse error');
-    return;
-  }
-
-  function domToY(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const t = node.textContent.trim();
-      return t ? new Y.XmlText(t) : null;
-    }
-    if (node.nodeType !== Node.ELEMENT_NODE) return null;
-    if (node.localName === 'script') return null;
-    const yEl = new Y.XmlElement(node.localName);
-    for (const at of node.attributes) yEl.setAttribute(at.name, at.value);
-    const children = [...node.childNodes].map(domToY).filter(Boolean);
-    if (children.length) yEl.insert(0, children);
-    return yEl;
-  }
-
-  function isToyG(el) {
-    return el.localName === 'g' &&
-           el.classList.contains('toy') &&
-           el.getAttribute('data-toy-id') &&
-           el.getAttribute('data-toy-type') &&
-           el.getAttribute('data-yid') &&
-           el.getAttribute('data-layer-type') === 'toy' &&
-           el.querySelector(':scope > svg');
-  }
-
-  const toysLayerEl = svgDoc.querySelector('#toys-layer');
-  if (!toysLayerEl) return;
-
-  let count = 0;
-  ydoc.transact(() => {
-    for (const child of toysLayerEl.children) {
-      if (isToyG(child)) {
-        const yG = domToY(child);
-        if (yG) { yToys.insert(yToys.length, [yG]); count++; }
-      }
-    }
-  });
-  if (count) App.addLog(`template: placed ${count} toy(s)`, 'local');
-}
-
 // ── Persistence ─────────────────────────────────────────────────────────────
-const _searchParams  = new URLSearchParams(location.search);
-const _paramBg       = _searchParams.get('bg');
-const _paramTemplate = _searchParams.get('template');
-
-const HOME_BACKGROUNDS = {
-  slatehex:  { url: 'img/bg_slatehex.png',  width: 1384, height: 998 },
-  beigehex:  { url: 'img/bg_beigehex.png',  width: 815,  height: 718 },
-  greenfelt: { url: 'img/bg_greenfelt.png', width: 800,  height: 600 },
-  irongrid:  { url: 'img/bg_irongrid.png',  width: 438,  height: 285 },
-};
-
 const persistence = new IndexeddbPersistence(`crdt-svg:${roomId}`, ydoc);
-persistence.on('synced', async () => {
+persistence.on('synced', () => {
   App.addLog('loaded from indexeddb', 'local');
   if (!yMeta.get('docId')) {
-    const bgDef = (_paramBg && HOME_BACKGROUNDS[_paramBg]) || HOME_BACKGROUNDS.slatehex;
-
+    // Brand-new room entered directly (not via home.html). Seed doc metadata;
+    // background defaults to slatehex via renderBackgroundLayer() fallback.
     ydoc.transact(() => {
       yMeta.set('docId',         roomId);
       yMeta.set('created',       new Date().toISOString());
       yMeta.set('schemaVersion', CURRENT_SCHEMA);
-      yMeta.set('bg_url',        bgDef.url);
-      yMeta.set('bg_width',      bgDef.width);
-      yMeta.set('bg_height',     bgDef.height);
     });
-
-    if (_paramTemplate) {
-      const svgText = await loadTemplate(_paramTemplate);
-      if (svgText) applyTemplateSVG(svgText);
-    }
   }
 });
 
-// ── WebRTC ──────────────────────────────────────────────────────────────────
+// ── WebRTC // ── WebRTC ──────────────────────────────────────────────────────────────────
 const signalingUrl = new URLSearchParams(location.search).get('signaling') || 'ws://localhost:4444';
 const provider     = new WebrtcProvider(roomId, ydoc, { signaling: [signalingUrl] });
 const awareness    = provider.awareness;

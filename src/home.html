@@ -299,54 +299,31 @@ body {
   .sampler-row { min-height: 180px; }
 }
 
-.sampler-bg {
+.sampler-scene {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
+  width: 100%;
+  height: 100%;
   transition: transform 0.4s ease;
 }
-.sampler-row:hover .sampler-bg { transform: scale(1.03); }
+.sampler-row:hover .sampler-scene { transform: scale(1.03); }
 
-.sampler-tint {
+/* Tint overlay — per-row colour set via --tint CSS var on the div */
+.sampler-row::after {
+  content: '';
   position: absolute;
   inset: 0;
-  transition: background 0.3s;
-}
-.sampler-row:hover .sampler-tint {
-  background: rgba(200, 148, 30, 0.06) !important;
-}
-
-/* dice strip */
-.sampler-dice {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 0 60px;
+  background: var(--tint);
+  transition: opacity 0.3s;
   pointer-events: none;
+  z-index: 1;
 }
-
-.die-wrapper {
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7));
-  opacity: 0.92;
-  transform: translateY(0);
-  animation: float-die var(--float-dur, 3s) ease-in-out infinite;
-  animation-delay: var(--float-delay, 0s);
-}
-
-@keyframes float-die {
-  0%, 100% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
-  50%       { transform: translateY(-6px) rotate(var(--rot, 0deg)); }
-}
+.sampler-row:hover::after { opacity: 0.5; }
 
 /* start button */
 .start-btn {
   pointer-events: none;
-  margin-top: 40px;
-  position: relative;
+  position: absolute;
   z-index: 2;
   background: rgba(14, 10, 22, 0.82);
   backdrop-filter: blur(12px);
@@ -480,70 +457,454 @@ body {
 
   <!-- Right sampler -->
   <main class="sampler" id="sampler">
-    <!-- Rows injected by JS -->
+
+<!-- ── Row 1: slatehex ──────────────────────────────────────────── -->
+<div class="sampler-row fade-in" style="--tint:rgba(13,11,19,0.45); transition-delay:0.05s"
+     data-bg="slatehex" data-bg-width="1384" data-bg-height="998">
+  <svg class="sampler-scene" xmlns="http://www.w3.org/2000/svg"
+       xmlns:xlink="http://www.w3.org/1999/xlink"
+       viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="s0-bg" x="0" y="0" width="1384" height="998" patternUnits="userSpaceOnUse">
+        <image href="img/bg_slatehex.png" x="0" y="0" width="1384" height="998"/>
+      </pattern>
+    </defs>
+    <g id="background-layer">
+      <rect width="100%" height="100%" fill="url(#s0-bg)"/>
+    </g>
+    <g id="boundaries-positions-layer"/>
+    <g id="toys-layer">
+      <g class="toy" data-toy-id="sample-s0d0" data-toy-type="dice_d6"
+         data-yid="sample-s0d0" data-layer-type="toy"
+         transform="rotate(-8,105,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="73" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s0d0-col"><feColorMatrix type="matrix" values="0.0980 0 0 0 0  0.1176 0 0 0 0  0.4706 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s0d0-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s0d0-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s0d0-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">6</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s0d1" data-toy-type="dice_d6"
+         data-yid="sample-s0d1" data-layer-type="toy"
+         transform="rotate(4,235,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="203" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s0d1-col"><feColorMatrix type="matrix" values="0.2353 0 0 0 0  0.0784 0 0 0 0  0.6275 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s0d1-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s0d1-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s0d1-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">4</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s0d2" data-toy-type="dice_d6"
+         data-yid="sample-s0d2" data-layer-type="toy"
+         transform="rotate(-3,365,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="333" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s0d2-col"><feColorMatrix type="matrix" values="0.0392 0 0 0 0  0.0392 0 0 0 0  0.3529 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s0d2-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s0d2-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s0d2-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">1</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s0d3" data-toy-type="dice_d6"
+         data-yid="sample-s0d3" data-layer-type="toy"
+         transform="rotate(9,495,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="463" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s0d3-col"><feColorMatrix type="matrix" values="0.3529 0 0 0 0  0.1569 0 0 0 0  0.7059 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s0d3-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s0d3-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s0d3-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">5</text>
+        </svg>
+      </g>
+    </g>
+    <g id="drawing-layer"/>
+  </svg>
+  <button class="start-btn">Start Here</button>
+</div>
+
+<!-- ── Row 2: beigehex ──────────────────────────────────────────── -->
+<div class="sampler-row fade-in" style="--tint:rgba(30,22,10,0.40); transition-delay:0.12s"
+     data-bg="beigehex" data-bg-width="815" data-bg-height="718">
+  <svg class="sampler-scene" xmlns="http://www.w3.org/2000/svg"
+       xmlns:xlink="http://www.w3.org/1999/xlink"
+       viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="s1-bg" x="0" y="0" width="815" height="718" patternUnits="userSpaceOnUse">
+        <image href="img/bg_beigehex.png" x="0" y="0" width="815" height="718"/>
+      </pattern>
+    </defs>
+    <g id="background-layer">
+      <rect width="100%" height="100%" fill="url(#s1-bg)"/>
+    </g>
+    <g id="boundaries-positions-layer"/>
+    <g id="toys-layer">
+      <g class="toy" data-toy-id="sample-s1d0" data-toy-type="dice_d6"
+         data-yid="sample-s1d0" data-layer-type="toy"
+         transform="rotate(-8,105,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="73" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s1d0-col"><feColorMatrix type="matrix" values="0.9412 0 0 0 0  0.9020 0 0 0 0  0.7843 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s1d0-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s1d0-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s1d0-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">3</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s1d1" data-toy-type="dice_d6"
+         data-yid="sample-s1d1" data-layer-type="toy"
+         transform="rotate(4,235,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="203" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s1d1-col"><feColorMatrix type="matrix" values="0.9412 0 0 0 0  0.9020 0 0 0 0  0.7843 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s1d1-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s1d1-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s1d1-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">6</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s1d2" data-toy-type="dice_d6"
+         data-yid="sample-s1d2" data-layer-type="toy"
+         transform="rotate(-3,365,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="333" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s1d2-col"><feColorMatrix type="matrix" values="0.9412 0 0 0 0  0.9020 0 0 0 0  0.7843 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s1d2-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s1d2-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s1d2-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">2</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s1d3" data-toy-type="dice_d6"
+         data-yid="sample-s1d3" data-layer-type="toy"
+         transform="rotate(9,495,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="463" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s1d3-col"><feColorMatrix type="matrix" values="0.9412 0 0 0 0  0.9020 0 0 0 0  0.7843 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s1d3-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s1d3-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s1d3-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">4</text>
+        </svg>
+      </g>
+    </g>
+    <g id="drawing-layer"/>
+  </svg>
+  <button class="start-btn">Start Here</button>
+</div>
+
+<!-- ── Row 3: greenfelt ──────────────────────────────────────────── -->
+<div class="sampler-row fade-in" style="--tint:rgba(8,20,10,0.38); transition-delay:0.19s"
+     data-bg="greenfelt" data-bg-width="800" data-bg-height="600">
+  <svg class="sampler-scene" xmlns="http://www.w3.org/2000/svg"
+       xmlns:xlink="http://www.w3.org/1999/xlink"
+       viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="s2-bg" x="0" y="0" width="800" height="600" patternUnits="userSpaceOnUse">
+        <image href="img/bg_greenfelt.png" x="0" y="0" width="800" height="600"/>
+      </pattern>
+    </defs>
+    <g id="background-layer">
+      <rect width="100%" height="100%" fill="url(#s2-bg)"/>
+    </g>
+    <g id="boundaries-positions-layer"/>
+    <g id="toys-layer">
+      <g class="toy" data-toy-id="sample-s2d0" data-toy-type="dice_d6"
+         data-yid="sample-s2d0" data-layer-type="toy"
+         transform="rotate(-8,105,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="73" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s2d0-col"><feColorMatrix type="matrix" values="0.7451 0 0 0 0  0.0784 0 0 0 0  0.0784 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s2d0-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s2d0-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s2d0-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">1</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s2d1" data-toy-type="dice_d6"
+         data-yid="sample-s2d1" data-layer-type="toy"
+         transform="rotate(4,235,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="203" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s2d1-col"><feColorMatrix type="matrix" values="0.7451 0 0 0 0  0.0784 0 0 0 0  0.0784 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s2d1-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s2d1-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s2d1-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">3</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s2d2" data-toy-type="dice_d6"
+         data-yid="sample-s2d2" data-layer-type="toy"
+         transform="rotate(-3,365,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="333" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s2d2-col"><feColorMatrix type="matrix" values="0.7451 0 0 0 0  0.0784 0 0 0 0  0.0784 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s2d2-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s2d2-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s2d2-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">5</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s2d3" data-toy-type="dice_d6"
+         data-yid="sample-s2d3" data-layer-type="toy"
+         transform="rotate(9,495,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="463" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s2d3-col"><feColorMatrix type="matrix" values="0.7451 0 0 0 0  0.0784 0 0 0 0  0.0784 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s2d3-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s2d3-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s2d3-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">2</text>
+        </svg>
+      </g>
+    </g>
+    <g id="drawing-layer"/>
+  </svg>
+  <button class="start-btn">Start Here</button>
+</div>
+
+<!-- ── Row 4: irongrid ──────────────────────────────────────────── -->
+<div class="sampler-row fade-in" style="--tint:rgba(10,12,16,0.50); transition-delay:0.26s"
+     data-bg="irongrid" data-bg-width="438" data-bg-height="285">
+  <svg class="sampler-scene" xmlns="http://www.w3.org/2000/svg"
+       xmlns:xlink="http://www.w3.org/1999/xlink"
+       viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="s3-bg" x="0" y="0" width="438" height="285" patternUnits="userSpaceOnUse">
+        <image href="img/bg_irongrid.png" x="0" y="0" width="438" height="285"/>
+      </pattern>
+    </defs>
+    <g id="background-layer">
+      <rect width="100%" height="100%" fill="url(#s3-bg)"/>
+    </g>
+    <g id="boundaries-positions-layer"/>
+    <g id="toys-layer">
+      <g class="toy" data-toy-id="sample-s3d0" data-toy-type="dice_d6"
+         data-yid="sample-s3d0" data-layer-type="toy"
+         transform="rotate(-8,105,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="73" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s3d0-col"><feColorMatrix type="matrix" values="0.3922 0 0 0 0  0.1176 0 0 0 0  0.6275 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s3d0-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s3d0-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s3d0-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">5</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s3d1" data-toy-type="dice_d6"
+         data-yid="sample-s3d1" data-layer-type="toy"
+         transform="rotate(4,235,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="203" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s3d1-col"><feColorMatrix type="matrix" values="0.1176 0 0 0 0  0.5098 0 0 0 0  0.2353 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s3d1-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s3d1-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s3d1-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">2</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s3d2" data-toy-type="dice_d6"
+         data-yid="sample-s3d2" data-layer-type="toy"
+         transform="rotate(-3,365,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="333" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s3d2-col"><feColorMatrix type="matrix" values="0.4314 0 0 0 0  0.2549 0 0 0 0  0.0784 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s3d2-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s3d2-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s3d2-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">6</text>
+        </svg>
+      </g>
+      <g class="toy" data-toy-id="sample-s3d3" data-toy-type="dice_d6"
+         data-yid="sample-s3d3" data-layer-type="toy"
+         transform="rotate(9,495,100)"
+         style="filter:drop-shadow(0 4px 10px rgba(0,0,0,0.75))">
+        <svg x="463" y="68" width="64" height="64" viewBox="0 0 80 100"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s3d3-col"><feColorMatrix type="matrix" values="0.5098 0 0 0 0  0.5098 0 0 0 0  0.5490 0 0 0 0  0 0 0 1 0"/></filter>
+            <linearGradient id="s3d3-lg" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#000" stop-opacity="1"/>
+              <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+          <g filter="url(#s3d3-col)">
+            <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
+            <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
+            <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#s3d3-lg);stroke-width:1.31;stroke-linejoin:round"/>
+          </g>
+          <text x="24" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">3</text>
+        </svg>
+      </g>
+    </g>
+    <g id="drawing-layer"/>
+  </svg>
+  <button class="start-btn">Start Here</button>
+</div>
+
   </main>
 
 </div>
 
-<script>
-// ── Gradient generation (FNV-1a, matches entity_gradient.js) ──────────────
-function hash32(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619) >>> 0;
-  }
-  return h;
-}
+<script type="importmap">
+{ "imports": { "yjs": "/lib/yjs.js" } }
+</script>
+<script type="module">
+import * as Y                   from 'yjs';
+import { IndexeddbPersistence } from '/lib/y-indexeddb.js';
 
-function entityGradient(name, lumAnchor = 40, satAnchor = 100) {
-  const h1 = hash32(name);
-  const h2 = hash32(name + '__stop2');
-  const h3 = hash32(name + '__lum1');
-  const h4 = hash32(name + '__lum2');
-  const h5 = hash32(name + '__sat1');
-  const h6 = hash32(name + '__sat2');
-  const h7 = hash32(name + '__angle');
+import { entityGradient }        from './entity_gradient.js';
 
-  const hue1 = h1 % 360;
-  const hueDelta = (h2 % 81) - 40;
-  const hue2 = ((hue1 + hueDelta) % 360 + 360) % 360;
-
-  const lumMin = Math.max(0, lumAnchor - 20);
-  const lumMax = Math.min(100, lumAnchor + 20);
-  const lumSteps = [];
-  for (let v = lumMin; v <= lumMax; v += 5) lumSteps.push(v);
-
-  const satMin = Math.max(0, satAnchor - 20);
-  const satMax = Math.min(100, satAnchor + 20);
-  const satSteps = [];
-  for (let v = satMin; v <= satMax; v += 5) satSteps.push(v);
-
-  const lum1 = lumSteps[h3 % lumSteps.length];
-  const lum2 = lumSteps[h4 % lumSteps.length];
-  const sat1 = satSteps[h5 % satSteps.length];
-  const sat2 = satSteps[h6 % satSteps.length];
-  const angles = [0,45,90,135];
-  const angle = angles[h7 % angles.length];
-
-  const c1 = `hsl(${hue1},${sat1}%,${lum1}%)`;
-  const c2 = `hsl(${hue2},${sat2}%,${lum2}%)`;
-  const grad = `linear-gradient(${angle}deg, ${c1}, ${c2})`;
-  return { grad, c1, c2, hue1, hue2, sat1, sat2, lum1, lum2, angle };
-}
-
-function drawGradientSwatch(canvas, name) {
-  const ctx = canvas.getContext('2d');
-  const g = entityGradient(name);
+function drawGradientSwatch(canvas, gradObj) {
+  const ctx  = canvas.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  grad.addColorStop(0, g.c1);
-  grad.addColorStop(1, g.c2);
+  grad.addColorStop(0, gradObj.c1);
+  grad.addColorStop(1, gradObj.c2);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
   ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, Math.PI*2);
   ctx.fillStyle = grad;
   ctx.fill();
-  return g;
 }
 
 // ── Storage ───────────────────────────────────────────────────────────────
@@ -590,18 +951,21 @@ function randomName() {
   return `${adj} ${name}`;
 }
 
-const PRESET_NAMES = [
-  'Seraphine','Aldric','Morrigan','Kestrel','Voss','Tamsin',
-  'Draven','Isolde','Cade','Riven'
-];
 
 const displayNameEl = document.getElementById('displayName');
 const swatchEl      = document.getElementById('gradientSwatch');
 const gradOptsEl    = document.getElementById('gradientOptions');
 
 // profile is loaded async; UI is wired up once it resolves.
-let _playerDb  = null;
-let _gradSeed  = null;
+let _playerDb = null;
+let _grad     = null;  // full entityGradient() output, stored frozen
+
+function makeLocalId() {
+  const dd    = String(new Date().getDate()).padStart(2, '0');
+  const chars = 'abcdefghijklmnopqrstuvwxyz';
+  const rand  = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `tt-p-v1-${dd}-${rand}`;
+}
 
 async function initProfile() {
   _playerDb = await openPlayerStore();
@@ -613,10 +977,18 @@ async function initProfile() {
   }
 
   let grad = await playerGet(_playerDb, 'grad');
-  _gradSeed = grad ? grad.gradSeed : name;
-  if (!grad) {
-    grad = { gradSeed: name };
+  if (!grad || !grad.c1) {
+    // First visit, or upgrading from old { gradSeed } format — compute and freeze.
+    const seed = (typeof grad?.gradSeed === 'string' && grad.gradSeed) ? grad.gradSeed : name;
+    grad = entityGradient(seed);
     await playerSet(_playerDb, 'grad', grad);
+  }
+  _grad = grad;
+
+  let localId = await playerGet(_playerDb, 'localId');
+  if (!localId) {
+    localId = makeLocalId();
+    await playerSet(_playerDb, 'localId', localId);
   }
 
   displayNameEl.value = name;
@@ -625,33 +997,37 @@ async function initProfile() {
 }
 
 function refreshSwatch() {
-  drawGradientSwatch(swatchEl, _gradSeed || 'anonymous');
+  drawGradientSwatch(swatchEl, _grad);
 }
 
 function renderGradOptions() {
   gradOptsEl.innerHTML = '';
-  PRESET_NAMES.forEach(n => {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  for (let i = 0; i < 20; i++) {
+    const seed      = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const presetGrad = entityGradient(seed);
     const c = document.createElement('canvas');
     c.className = 'grad-option';
     c.width = 26; c.height = 26;
-    if (n === _gradSeed) c.classList.add('active');
-    drawGradientSwatch(c, n);
-    c.title = n;
+    if (_grad && presetGrad.c1 === _grad.c1 && presetGrad.c2 === _grad.c2) {
+      c.classList.add('active');
+    }
+    drawGradientSwatch(c, presetGrad);
     c.addEventListener('click', async () => {
-      _gradSeed = n;
+      _grad = presetGrad;
       document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
       c.classList.add('active');
-      await playerSet(_playerDb, 'grad', { gradSeed: n });
+      await playerSet(_playerDb, 'grad', _grad);
       refreshSwatch();
     });
     gradOptsEl.appendChild(c);
-  });
+  }
 }
 
 swatchEl.addEventListener('click', async () => {
-  _gradSeed = 'rng_' + Math.random().toString(36).slice(2);
+  _grad = entityGradient('rng_' + Math.random().toString(36).slice(2));
   document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
-  await playerSet(_playerDb, 'grad', { gradSeed: _gradSeed });
+  await playerSet(_playerDb, 'grad', _grad);
   refreshSwatch();
 });
 
@@ -674,7 +1050,7 @@ function renderTables() {
   list.slice().reverse().forEach(t => {
     const a = document.createElement('a');
     a.className = 'table-row';
-    a.href = `index.html?bg=${encodeURIComponent(t.bg)}#${encodeURIComponent(t.id)}`;
+    a.href = `index.html#${encodeURIComponent(t.id)}`;
 
     const g = entityGradient(t.id);
     const dot = document.createElement('canvas');
@@ -703,136 +1079,6 @@ function renderTables() {
 }
 renderTables();
 
-// ── D6 SVG builder ────────────────────────────────────────────────────────
-// ── Template store ────────────────────────────────────────────────────────────
-function openTemplateStore() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('crdt-svg-templates', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('templates');
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
-
-async function saveTemplate(key, svgText) {
-  const db = await openTemplateStore();
-  const tx = db.transaction('templates', 'readwrite');
-  tx.objectStore('templates').put(svgText, key);
-  return new Promise((res, rej) => {
-    tx.oncomplete = res;
-    tx.onerror    = () => rej(tx.error);
-  });
-}
-
-// ── Template builder ──────────────────────────────────────────────────────────
-function rgbToMatrix([r, g, b]) {
-  const rf = (r/255).toFixed(4), gf = (g/255).toFixed(4), bf = (b/255).toFixed(4);
-  return `${rf} 0 0 0 0  ${gf} 0 0 0 0  ${bf} 0 0 0 0  0 0 0 1 0`;
-}
-
-function makeToyG(d6Source, { toyId, x, y, faceValue, color }) {
-  const DISPLAY = 64;
-  const prefix  = `${toyId}__`;
-
-  let svg = d6Source
-    .replace(/<\?xml[^?]*\?>\s*/i, '')   // strip XML declaration -- illegal when nested
-    .replace(/\bid="([^"]+)"/g,          (_, id) => `id="${prefix}${id}"`)
-    .replace(/url\(#([^)]+)\)/g,         (_, id) => `url(#${prefix}${id})`)
-    .replace(/xlink:href="#([^"]+)"/g,   (_, id) => `xlink:href="#${prefix}${id}"`)
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<script[^>]*\/>/gi,           '')
-    .replace(/(<svg\b[^>]*?)>/s, (_, open) => {
-      // Synthesize viewBox from source width/height if absent (mirrors svgTextToYXml)
-      const srcW = parseFloat((open.match(/\bwidth="([^"]*)"/)  || [])[1]) || 100;
-      const srcH = parseFloat((open.match(/\bheight="([^"]*)"/) || [])[1]) || 100;
-      const vb   = open.includes('viewBox') ? '' : ` viewBox="0 0 ${srcW} ${srcH}"`;
-      const tag  = open
-        .replace(/\s+x="[^"]*"/, '').replace(/\s+y="[^"]*"/, '')
-        .replace(/\s+width="[^"]*"/, '').replace(/\s+height="[^"]*"/, '');
-      return `${tag}${vb} x="${x - DISPLAY/2}" y="${y - DISPLAY/2}" width="${DISPLAY}" height="${DISPLAY}">`;
-    })
-    .replace(/(<feColorMatrix\b[^>]*?\bvalues=")[^"]*(")/s,
-      (_, pre, post) => `${pre}${rgbToMatrix(color)}${post}`)
-    .replace(/(<tspan\b[^>]*>)\s*\d+\s*(<\/tspan>)/s, `$1${faceValue}$2`);
-
-  return `<g class="toy" data-toy-id="${toyId}" data-toy-type="dice_d6" ` +
-         `data-yid="${toyId}" data-layer-type="toy">${svg}</g>`;
-}
-
-function buildTemplateSVG(d6Source, { bg, bgWidth, bgHeight, values, colors }) {
-  const spread  = Math.min(bgWidth, bgHeight) * 0.22;
-  const cx      = bgWidth  / 2;
-  const cy      = bgHeight / 2;
-  const offsets = [
-    { dx: -spread * 1.5, dy: -spread * 0.3 },
-    { dx: -spread * 0.5, dy:  spread * 0.4 },
-    { dx:  spread * 0.5, dy: -spread * 0.4 },
-    { dx:  spread * 1.5, dy:  spread * 0.3 },
-  ];
-  const toyGs = values.map((faceValue, i) => {
-    const toyId = `tmpl_${bg}_d${i}_${Math.random().toString(36).slice(2, 7)}`;
-    return makeToyG(d6Source, {
-      toyId, faceValue, color: colors[i],
-      x: Math.round(cx + offsets[i].dx),
-      y: Math.round(cy + offsets[i].dy),
-    });
-  }).join('\n    ');
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">` +
-         `<g id="toys-layer">\n    ${toyGs}\n  </g></svg>`;
-}
-
-// ── Row config ────────────────────────────────────────────────────────────────
-const ROWS = [
-  {
-    bg: 'slatehex',  label: 'Slate Hex',  bgWidth: 1384, bgHeight: 998,
-    tint: 'rgba(13,11,19,0.45)',
-    values: [6,4,1,5],
-    colors: [[25,30,120],[60,20,160],[10,10,90],[90,40,180]],
-  },
-  {
-    bg: 'beigehex',  label: 'Beige Hex',  bgWidth: 815,  bgHeight: 718,
-    tint: 'rgba(30,22,10,0.40)',
-    values: [3,6,2,4],
-    colors: [[240,230,200],[240,230,200],[240,230,200],[240,230,200]],
-  },
-  {
-    bg: 'greenfelt', label: 'Green Felt', bgWidth: 800,  bgHeight: 600,
-    tint: 'rgba(8,20,10,0.38)',
-    values: [1,3,5,2],
-    colors: [[190,20,20],[190,20,20],[190,20,20],[190,20,20]],
-  },
-  {
-    bg: 'irongrid',  label: 'Iron Grid',  bgWidth: 438,  bgHeight: 285,
-    tint: 'rgba(10,12,16,0.50)',
-    values: [5,2,6,3],
-    colors: [[100,30,160],[30,130,60],[110,65,20],[130,130,140]],
-  },
-];
-
-// ── Fetch d6 + write templates to IndexedDB ───────────────────────────────────
-const TEMPLATE_VERSION = 3; // bump to force-refresh on changes
-const TEMPLATE_VER_KEY = 'crdt_svg_tmpl_ver';
-
-async function ensureTemplates() {
-  const stored = parseInt(localStorage.getItem(TEMPLATE_VER_KEY) || '0', 10);
-  if (stored >= TEMPLATE_VERSION) return;
-  let d6Source;
-  try {
-    const res = await fetch('toy/dice_d6.svg');
-    if (!res.ok) throw new Error(res.status);
-    d6Source = await res.text();
-  } catch (e) {
-    console.warn('crdt-svg home: could not fetch dice_d6.svg', e);
-    return;
-  }
-  await Promise.all(ROWS.map(row =>
-    saveTemplate(`starter-${row.bg}`, buildTemplateSVG(d6Source, row))
-  ));
-  localStorage.setItem(TEMPLATE_VER_KEY, String(TEMPLATE_VERSION));
-}
-
-ensureTemplates(); // fire-and-forget; ready well before any click
-
 // On back-navigation (bfcache restore): reset ripple and refresh tables list.
 window.addEventListener('pageshow', () => {
   const circle = document.getElementById('ripple-circle');
@@ -841,72 +1087,102 @@ window.addEventListener('pageshow', () => {
   renderTables();
 });
 
-// ── Sampler preview dice (decorative only, not stored) ────────────────────────
-function makeDie(value, [r, g, b]) {
-  const rf = (r/255).toFixed(3), gf = (g/255).toFixed(3), bf = (b/255).toFixed(3);
-  const matrix = `${rf} 0 0 0 0  ${gf} 0 0 0 0  ${bf} 0 0 0 0  0 0 0 1 0`;
-  const uid = `${value}-${r}-${g}-${b}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="80" viewBox="0 0 80 100">
-  <defs>
-    <filter id="col-${uid}"><feColorMatrix type="matrix" values="${matrix}"/></filter>
-    <linearGradient id="lg-${uid}" x1="0" y1="22.6" x2="0" y2="88.9" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#000" stop-opacity="1"/>
-      <stop offset="1" stop-color="#000" stop-opacity="0.4"/>
-    </linearGradient>
-  </defs>
-  <g filter="url(#col-${uid})">
-    <path style="fill:#000;fill-opacity:0.5" d="m16.3,45.6 c-1.7,0-5.2,0.07-6.2,0.64 -1.6,0.9-1.73,1.6-1.9,5.0 l-2.88,32.3 c0.03,1.4 6.4,6.3 8.3,6.3 h52 c1.9,0 8.3,-4.9 8.3,-6.3 l-2.88,-32.3 c-0.18,-3.4-0.31,-4.1-1.9,-5.0 -1.05,-0.57-4.55,-0.64-6.23,-0.64 z"/>
-    <path d="m16.3,11.5 c-1.7,0-5.2,0.12-6.2,1.1 -1.6,1.56-1.73,2.79-1.9,8.66 l-2.88,55.7 c0.03,2.39 6.4,10.83 8.3,10.83 h52 c1.9,0 8.3,-8.44 8.3,-10.83 l-2.88,-55.7 c-0.18,-5.87-0.31,-7.1-1.9,-8.66 -1.05,-0.98-4.55,-1.1-6.23,-1.1 z" style="fill:#9b9b9b;stroke:#000;stroke-width:1.31;stroke-linejoin:round"/>
-    <path d="m12,11.7 h55 c1.66,0 2.94,1.34 3,3 l2,59 c0.06,1.66-1.34,3-3,3 h-59 c-1.66,0-3.06,-1.34-3,-3 l2,-59 c0.056,-1.66 1.34,-3 3,-3 z" style="fill:#dedede;stroke:url(#lg-${uid});stroke-width:1.31;stroke-linejoin:round"/>
-  </g>
-  <text x="${value >= 10 ? 12 : 24}" y="62" style="font-size:50px;font-family:sans-serif;fill:#000">${value}</text>
-</svg>`;
-}
+// ── Seed a new room from a sample SVG into IndexedDB ─────────────────────────
+// Mirrors the importSVG logic in app.js: reads background from defs pattern,
+// toys from #toys-layer, drawing from #drawing-layer, into a fresh Y.Doc,
+// then persists it via IndexeddbPersistence before navigating.
+async function seedRoom(roomId, sampleSvgEl) {
+  const CURRENT_SCHEMA = 4;
 
-const rotations = [-8, 4, -3, 9];
-const floatDurs = [3.2, 3.8, 2.9, 3.5];
-const delays    = [0, 0.7, 0.4, 1.1];
+  const ydoc         = new Y.Doc();
+  const yMeta        = ydoc.getMap('meta');
+  const yToys        = ydoc.getXmlFragment('toys');
+  const yDrawing     = ydoc.getXmlFragment('shapes');
 
-const sampler = document.getElementById('sampler');
+  // DOM → Y.XmlElement tree (mirrors domToY in app.js importSVG)
+  function domToY(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const t = node.textContent.trim();
+      return t ? new Y.XmlText(t) : null;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+    if (node.localName === 'script') return null;
+    const yEl = new Y.XmlElement(node.localName);
+    for (const at of node.attributes) yEl.setAttribute(at.name, at.value);
+    const children = [...node.childNodes].map(domToY).filter(Boolean);
+    if (children.length) yEl.insert(0, children);
+    return yEl;
+  }
 
-ROWS.forEach((row, ri) => {
-  const div = document.createElement('div');
-  div.className = 'sampler-row fade-in';
-  div.style.transitionDelay = `${0.05 + ri * 0.07}s`;
+  function isToyG(el) {
+    return el.localName === 'g' &&
+           el.classList.contains('toy') &&
+           el.getAttribute('data-toy-id') &&
+           el.getAttribute('data-toy-type') &&
+           el.getAttribute('data-yid') &&
+           el.getAttribute('data-layer-type') === 'toy' &&
+           el.querySelector(':scope > svg');
+  }
 
-  const bgDiv = document.createElement('div');
-  bgDiv.className = 'sampler-bg';
-  bgDiv.style.backgroundImage = `url('img/bg_${row.bg}.png')`;
+  const bgPattern   = sampleSvgEl.querySelector('defs pattern');
+  const toysLayerEl = sampleSvgEl.querySelector('#toys-layer');
+  const drawLayerEl = sampleSvgEl.querySelector('#drawing-layer');
 
-  const tintDiv = document.createElement('div');
-  tintDiv.className = 'sampler-tint';
-  tintDiv.style.background = row.tint;
+  ydoc.transact(() => {
+    // Background
+    const bgImg = bgPattern?.querySelector('image');
+    const bgUrl = bgImg?.getAttribute('href') || '';
+    const bgW   = Number(bgPattern?.getAttribute('width'))  || 0;
+    const bgH   = Number(bgPattern?.getAttribute('height')) || 0;
+    yMeta.set('docId',         roomId);
+    yMeta.set('created',       new Date().toISOString());
+    yMeta.set('schemaVersion', CURRENT_SCHEMA);
+    yMeta.set('bg_url',        bgUrl);
+    yMeta.set('bg_width',      bgW);
+    yMeta.set('bg_height',     bgH);
 
-  const diceDiv = document.createElement('div');
-  diceDiv.className = 'sampler-dice';
+    // Toys
+    if (toysLayerEl) {
+      for (const child of toysLayerEl.children) {
+        if (isToyG(child)) {
+          const yG = domToY(child);
+          if (yG) yToys.insert(yToys.length, [yG]);
+        }
+      }
+    }
 
-  row.values.forEach((val, di) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'die-wrapper';
-    wrapper.style.setProperty('--rot', `${rotations[di]}deg`);
-    wrapper.style.setProperty('--float-dur', `${floatDurs[di]}s`);
-    wrapper.style.setProperty('--float-delay', `${delays[di]}s`);
-    wrapper.innerHTML = makeDie(val, row.colors[di]);
-    diceDiv.appendChild(wrapper);
+    // Drawing
+    if (drawLayerEl) {
+      for (const child of drawLayerEl.children) {
+        const yEl = domToY(child);
+        if (yEl) yDrawing.insert(yDrawing.length, [yEl]);
+      }
+    }
   });
 
-  const btn = document.createElement('button');
-  btn.className = 'start-btn';
-  btn.textContent = 'Start Here';
+  // Persist to IndexedDB and wait for it to flush before navigating.
+  await new Promise((resolve, reject) => {
+    const persistence = new IndexeddbPersistence(`crdt-svg:${roomId}`, ydoc);
+    persistence.on('synced', resolve);
+    persistence.on('error',  reject);
+  });
+}
 
-  div.append(bgDiv, tintDiv, diceDiv, btn);
-  sampler.appendChild(div);
-
-  div.addEventListener('click', e => launchRipple(e.clientX, e.clientY, row));
+// ── Wire sampler row clicks to static HTML rows ──────────────────────────────
+document.querySelectorAll('.sampler-row').forEach(el => {
+  el.addEventListener('click', e => {
+    const row = {
+      bg:       el.dataset.bg,
+      bgWidth:  Number(el.dataset.bgWidth),
+      bgHeight: Number(el.dataset.bgHeight),
+    };
+    const svgEl = el.querySelector('svg.sampler-scene');
+    launchRipple(e.clientX, e.clientY, row, svgEl);
+  });
 });
 
-// ── Ripple transition ─────────────────────────────────────────────────────────
-function launchRipple(cx, cy, row) {
+// ── Ripple transition + room seeding ─────────────────────────────────────────
+function launchRipple(cx, cy, row, svgEl) {
   const circle = document.getElementById('ripple-circle');
   const maxDist = Math.hypot(
     Math.max(cx, window.innerWidth  - cx),
@@ -926,10 +1202,16 @@ function launchRipple(cx, cy, row) {
   const roomId = generateRoomId();
   recordTableVisit(roomId, row);
 
-  setTimeout(() => {
-    const params = new URLSearchParams({ bg: row.bg, template: `starter-${row.bg}` });
-    window.location.href = `index.html?${params}#${roomId}`;
-  }, 520);
+  // Seed the room into IndexedDB, then navigate once done (or after the
+  // ripple animation completes, whichever is later).
+  const seedDone    = seedRoom(roomId, svgEl);
+  const rippleDone  = new Promise(r => setTimeout(r, 520));
+  Promise.all([seedDone, rippleDone]).then(() => {
+    window.location.href = `index.html#${roomId}`;
+  }).catch(err => {
+    console.error('crdt-svg: room seed failed', err);
+    window.location.href = `index.html#${roomId}`;
+  });
 }
 
 function generateRoomId() {
@@ -948,7 +1230,7 @@ function generateRoomId() {
 
 function recordTableVisit(roomId, row) {
   const tables = loadTables();
-  tables.push({ id: roomId, bg: row.bg, name: roomId, lastVisit: Date.now() });
+  tables.push({ id: roomId, name: roomId, lastVisit: Date.now() });
   if (tables.length > 20) tables.splice(0, tables.length - 20);
   try { localStorage.setItem(TABLES_KEY, JSON.stringify(tables)); } catch {}
 }

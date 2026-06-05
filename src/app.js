@@ -110,12 +110,6 @@ export function makeDoc() {
   const yDrawing   = ydoc.getXmlFragment('shapes');
   const yDrawingMeta = ydoc.getMap('shapeMeta');
   const yMeta      = ydoc.getMap('meta');
-  // Seed default background if doc is brand new
-  if (!yMeta.get('bg_url')) {
-    yMeta.set('bg_url',    'img/bg_slatehex.png');
-    yMeta.set('bg_width',  1384);
-    yMeta.set('bg_height', 998);
-  }
   return { ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta };
 }
 
@@ -702,16 +696,32 @@ const App = {
                el.querySelector(':scope > svg');
       }
 
-      // App-internal layers never imported into drawing
-      const SKIP_IDS = new Set([
-        'background-layer', 'boundaries-positions-layer', 'overlay-layer',
-      ]);
+      // overlay-layer is UI-only (selection/cursor rendering) and is stripped
+      // on export; all other named layers carry persistent document content.
+      const SKIP_IDS = new Set(['overlay-layer']);
 
+      const bgPattern   = svgDoc.querySelector('defs pattern');
       const toysLayerEl = svgDoc.querySelector('#toys-layer');
       const drawLayerEl = svgDoc.querySelector('#drawing-layer');
       let toyCount = 0, toyErrors = 0, drawCount = 0;
 
       _ydoc.transact(() => {
+        // background-layer: extract bg image url/dimensions from the <pattern>
+        // in <defs> and write to yMeta so the background is restored on import.
+        if (bgPattern) {
+          const img = bgPattern.querySelector('image');
+          if (img) {
+            const url = img.getAttribute('href') || img.getAttribute('xlink:href') || '';
+            const w   = Number(bgPattern.getAttribute('width'))  || 0;
+            const h   = Number(bgPattern.getAttribute('height')) || 0;
+            if (url) {
+              _yMeta.set('bg_url',   url);
+              if (w) _yMeta.set('bg_width',  w);
+              if (h) _yMeta.set('bg_height', h);
+            }
+          }
+        }
+
         // Toys layer
         if (toysLayerEl) {
           const invalid = [];
@@ -746,6 +756,8 @@ const App = {
           const id = el.getAttribute('id') ?? '';
           if (el.localName === 'defs') continue;
           if (id === 'toys-layer' || id === 'drawing-layer') continue;
+          if (id === 'background-layer') continue; // handled via defs pattern above
+          if (id === 'boundaries-positions-layer') continue; // TODO: import into its own Yjs fragment when implemented
           if (SKIP_IDS.has(id)) continue;
           const yEl = domToY(el);
           if (yEl) { _yDrawing.insert(_yDrawing.length, [yEl]); drawCount++; }
@@ -815,10 +827,9 @@ function renderBackgroundLayer() {
   const layer = _svgEl.querySelector('#background-layer');
   if (!layer) return;
   layer.innerHTML = '';
-  const url    = _yMeta.get('bg_url');
-  const width  = _yMeta.get('bg_width');
-  const height = _yMeta.get('bg_height');
-  if (!url) return;
+  const url    = _yMeta.get('bg_url')    || 'img/bg_slatehex.png';
+  const width  = _yMeta.get('bg_width')  || 1384;
+  const height = _yMeta.get('bg_height') || 998;
   const SVGNS = 'http://www.w3.org/2000/svg';
   // Tiling pattern so the image repeats across infinite canvas
   const defs    = _svgEl.querySelector('defs');
