@@ -189,16 +189,113 @@ export const CURRENT_SCHEMA = 4;
 
 const { ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta } = makeDoc();
 
+// ── Template store helpers ───────────────────────────────────────────────────
+// home.html writes starter SVG docs into 'crdt-svg-templates' IndexedDB.
+// We read them here (once, on new-doc init) and import their toy content.
+function openTemplateStore() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('crdt-svg-templates', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('templates');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function loadTemplate(key) {
+  try {
+    const db  = await openTemplateStore();
+    const tx  = db.transaction('templates', 'readonly');
+    const req = tx.objectStore('templates').get(key);
+    return await new Promise((res, rej) => {
+      req.onsuccess = () => res(req.result ?? null);
+      req.onerror   = () => rej(req.error);
+    });
+  } catch (e) {
+    console.warn('crdt-svg: could not load template', key, e);
+    return null;
+  }
+}
+
+function applyTemplateSVG(svgText) {
+  // Mirrors the domToY + isToyG logic from App.importSVG, but runs at boot
+  // time before the full UI is live, so we operate directly on the Yjs doc.
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+  if (svgDoc.querySelector('parsererror')) {
+    console.warn('crdt-svg: template SVG parse error');
+    return;
+  }
+
+  function domToY(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const t = node.textContent.trim();
+      return t ? new Y.XmlText(t) : null;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+    if (node.localName === 'script') return null;
+    const yEl = new Y.XmlElement(node.localName);
+    for (const at of node.attributes) yEl.setAttribute(at.name, at.value);
+    const children = [...node.childNodes].map(domToY).filter(Boolean);
+    if (children.length) yEl.insert(0, children);
+    return yEl;
+  }
+
+  function isToyG(el) {
+    return el.localName === 'g' &&
+           el.classList.contains('toy') &&
+           el.getAttribute('data-toy-id') &&
+           el.getAttribute('data-toy-type') &&
+           el.getAttribute('data-yid') &&
+           el.getAttribute('data-layer-type') === 'toy' &&
+           el.querySelector(':scope > svg');
+  }
+
+  const toysLayerEl = svgDoc.querySelector('#toys-layer');
+  if (!toysLayerEl) return;
+
+  let count = 0;
+  ydoc.transact(() => {
+    for (const child of toysLayerEl.children) {
+      if (isToyG(child)) {
+        const yG = domToY(child);
+        if (yG) { yToys.insert(yToys.length, [yG]); count++; }
+      }
+    }
+  });
+  if (count) App.addLog(`template: placed ${count} toy(s)`, 'local');
+}
+
 // ── Persistence ─────────────────────────────────────────────────────────────
+const _searchParams  = new URLSearchParams(location.search);
+const _paramBg       = _searchParams.get('bg');
+const _paramTemplate = _searchParams.get('template');
+
+const HOME_BACKGROUNDS = {
+  slatehex:  { url: 'img/bg_slatehex.png',  width: 1384, height: 998 },
+  beigehex:  { url: 'img/bg_beigehex.png',  width: 815,  height: 718 },
+  greenfelt: { url: 'img/bg_greenfelt.png', width: 800,  height: 600 },
+  irongrid:  { url: 'img/bg_irongrid.png',  width: 438,  height: 285 },
+};
+
 const persistence = new IndexeddbPersistence(`crdt-svg:${roomId}`, ydoc);
-persistence.on('synced', () => {
+persistence.on('synced', async () => {
   App.addLog('loaded from indexeddb', 'local');
   if (!yMeta.get('docId')) {
+    const bgDef = (_paramBg && HOME_BACKGROUNDS[_paramBg]) || HOME_BACKGROUNDS.slatehex;
+
     ydoc.transact(() => {
       yMeta.set('docId',         roomId);
       yMeta.set('created',       new Date().toISOString());
       yMeta.set('schemaVersion', CURRENT_SCHEMA);
+      yMeta.set('bg_url',        bgDef.url);
+      yMeta.set('bg_width',      bgDef.width);
+      yMeta.set('bg_height',     bgDef.height);
     });
+
+    if (_paramTemplate) {
+      const svgText = await loadTemplate(_paramTemplate);
+      if (svgText) applyTemplateSVG(svgText);
+    }
   }
 });
 
