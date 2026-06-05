@@ -716,10 +716,6 @@ const App = {
                el.querySelector(':scope > svg');
       }
 
-      // overlay-layer is UI-only (selection/cursor rendering) and is stripped
-      // on export; all other named layers carry persistent document content.
-      const SKIP_IDS = new Set(['overlay-layer']);
-
       const bgPattern   = svgDoc.querySelector('defs pattern');
       const toysLayerEl = svgDoc.querySelector('#toys-layer');
       const drawLayerEl = svgDoc.querySelector('#drawing-layer');
@@ -776,9 +772,11 @@ const App = {
           const id = el.getAttribute('id') ?? '';
           if (el.localName === 'defs') continue;
           if (id === 'toys-layer' || id === 'drawing-layer') continue;
-          if (id === 'background-layer') continue; // handled via defs pattern above
-          if (id === 'boundaries-positions-layer') continue; // TODO: import into its own Yjs fragment when implemented
-          if (SKIP_IDS.has(id)) continue;
+          if (id === 'background-layer') continue;
+          // TODO: boundaries-positions import into its own Yjs fragment when implemented
+          if (id === 'boundaries-positions-layer') continue;
+          // overlay-layer is UI-only and is stripped on export
+          if (id === 'overlay-layer') continue;
           const yEl = domToY(el);
           if (yEl) { _yDrawing.insert(_yDrawing.length, [yEl]); drawCount++; }
         }

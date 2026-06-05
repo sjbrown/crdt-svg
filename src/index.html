@@ -223,9 +223,8 @@ async function resolveIdentity() {
 
   let grad = await playerGet(db, 'grad');
   if (!grad || !grad.c1) {
-    // First visit, or upgrading from old { gradSeed } format — compute and freeze.
-    const seed = (typeof grad?.gradSeed === 'string' && grad.gradSeed) ? grad.gradSeed : name;
-    grad = entityGradient(seed);
+    // First visit
+    grad = entityGradient(name);
     await playerSet(db, 'grad', grad);
   }
 
@@ -283,7 +282,7 @@ persistence.on('synced', () => {
   }
 });
 
-// ── WebRTC // ── WebRTC ──────────────────────────────────────────────────────────────────
+// ── WebRTC  ──────────────────────────────────────────────────────────────────
 const signalingUrl = new URLSearchParams(location.search).get('signaling') || 'ws://localhost:4444';
 const provider     = new WebrtcProvider(roomId, ydoc, { signaling: [signalingUrl] });
 const awareness    = provider.awareness;
