@@ -120,7 +120,7 @@ export function makeDoc() {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awareness, provider, myId, myGrad, roomId, svgElement }) {
+export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awareness, provider, myId, myGrad, roomId, svgElement, displayName }) {
   _ydoc       = ydoc;
   _yMeta      = yMeta;
   _yToys      = yToys;
@@ -148,7 +148,7 @@ export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awa
 
   // 4. UI — needs App; attaches panel/menu/pill listeners
   UI.init(App);
-  UI.setIdentity({ projectName: 'crdt-svg', userId: `me · ${myId.slice(0, 6)}`, roomId });
+  UI.setIdentity({ projectName: 'crdt-svg', userId: `me · ${displayName}`, roomId });
 
   // 5. Keyboard shortcuts
   window.addEventListener('keydown', onKeyDown);

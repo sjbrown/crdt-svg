@@ -181,8 +181,12 @@ if (!roomId) { roomId = uid(); location.hash = roomId; }
 const myId    = uid();
 const myGrad = entityGradient(myId);
 
+// Read display name saved by home.html profile panel.
+const _profile     = (() => { try { return JSON.parse(localStorage.getItem('crdt_svg_profile')) || {}; } catch { return {}; } })();
+const myDisplayName = (_profile.name || '').trim() || myId.slice(0, 6);
+
 document.getElementById('roomLabel').textContent = roomId;
-document.getElementById('myIdLabel').textContent = `me: ${myId.slice(0,6)}`;
+document.getElementById('myIdLabel').textContent = `me: ${myDisplayName}`;
 
 // ── Yjs ─────────────────────────────────────────────────────────────────────
 export const CURRENT_SCHEMA = 4;
@@ -306,7 +310,7 @@ const awareness    = provider.awareness;
 awareness.setLocalState({ id: myId, color: myGrad.c1, grad: myGrad, cursor: null, selection: null });
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
-boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awareness, provider, myId, myGrad, roomId });
+boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, awareness, provider, myId, myGrad, roomId, displayName: myDisplayName });
 </script>
 
 </body>

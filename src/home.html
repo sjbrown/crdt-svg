@@ -626,7 +626,7 @@ function renderTables() {
   list.slice().reverse().forEach(t => {
     const a = document.createElement('a');
     a.className = 'table-row';
-    a.href = `index.html?room=${encodeURIComponent(t.id)}&bg=${encodeURIComponent(t.bg)}`;
+    a.href = `index.html?bg=${encodeURIComponent(t.bg)}#${encodeURIComponent(t.id)}`;
 
     const g = entityGradient(t.id);
     const dot = document.createElement('canvas');
@@ -643,7 +643,7 @@ function renderTables() {
 
     const name = document.createElement('span');
     name.className = 'table-name';
-    name.textContent = t.name || `Table #${t.id.slice(-6)}`;
+    name.textContent = t.name || t.id;
 
     const date = document.createElement('span');
     date.className = 'table-date';
@@ -785,11 +785,12 @@ async function ensureTemplates() {
 
 ensureTemplates(); // fire-and-forget; ready well before any click
 
-// Reset the ripple on back-navigation (bfcache restores the expanded circle).
-window.addEventListener('pageshow', e => {
+// On back-navigation (bfcache restore): reset ripple and refresh tables list.
+window.addEventListener('pageshow', () => {
   const circle = document.getElementById('ripple-circle');
   circle.style.transition = 'none';
   circle.style.transform  = 'scale(0)';
+  renderTables();
 });
 
 // ── Sampler preview dice (decorative only, not stored) ────────────────────────
@@ -884,13 +885,22 @@ function launchRipple(cx, cy, row) {
 }
 
 function generateRoomId() {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({length: 8}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  const dd    = String(new Date().getDate()).padStart(2, '0');
+  const chars = 'abcdefghijklmnopqrstuvwxyz';
+  const rand  = Array.from({length: 3}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  const name  = (loadProfile().name || '').trim();
+  const slug  = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')   // special chars → hyphen
+    .replace(/^-+|-+$/g, '')        // trim leading/trailing hyphens
+    .slice(0, 10)
+    || 'table';
+  return `${slug}-${dd}${rand}`;
 }
 
 function recordTableVisit(roomId, row) {
   const tables = loadTables();
-  tables.push({ id: roomId, bg: row.bg, name: `Table #${roomId.slice(-4).toUpperCase()}`, lastVisit: Date.now() });
+  tables.push({ id: roomId, bg: row.bg, name: roomId, lastVisit: Date.now() });
   if (tables.length > 20) tables.splice(0, tables.length - 20);
   try { localStorage.setItem(TABLES_KEY, JSON.stringify(tables)); } catch {}
 }
