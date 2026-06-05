@@ -261,7 +261,7 @@ function renderDrawingList() {
     const del = document.createElement('button');
     del.className   = 'shape-del';
     del.textContent = '×';
-    del.addEventListener('click', ev => { ev.stopPropagation(); App.deleteShape(id); });
+    del.addEventListener('click', ev => { ev.stopPropagation(); App.deleteShape(svgEl); });
     item.append(sw, lbl, own, del);
     item.addEventListener('click', () => App.selectShape(id));
     list.appendChild(item);
@@ -445,18 +445,38 @@ const App = {
     });
   },
 
-  deleteShape: (id) => {
+  deleteShape: (svgEl) => {
+    const id  = svgEl.getAttribute('data-yid');
     const yEl = findShape(_yDrawing, id);
     if (!yEl) return;
     const snap = yEl.getAttributes();
     _undoStack.push({ op: 'del', attrs: snap, meta: _yDrawingMeta.get(id) });
     deleteShape(_ydoc, _yDrawing, _yDrawingMeta, id);
-    if (_selectedId === id) App.selectShape(null);
     addHistory(`deleted ${id.slice(0, 6)}`, { fill: snap.fill, shapeType: yEl.nodeName });
     App.addLog(`deleted ${id.slice(0, 6)}`, 'local');
+    if (id === _selectedId) App.selectShape(null);
+    return true;
   },
 
-  deleteSelected:   () => { if (_selectedId) App.deleteShape(_selectedId); },
+  deleteToy: (svgEl) => {
+    const id  = svgEl.getAttribute('data-yid');
+    const yEl = findToy(_yToys, id);
+    if (!yEl) return;
+    const snap = yEl.getAttributes();
+    _undoStack.push({ op: 'del', attrs: snap, meta: _yToyMeta.get(id) });
+    deleteToy(_ydoc, _yToys, _yToyMeta, id);
+    addHistory(`deleted ${id.slice(0, 6)}`, { });
+    App.addLog(`deleted ${id.slice(0, 6)}`, 'local');
+    return true;
+  },
+
+  deleteSelected:   () => {
+    if (!_selectedId) return;
+    const svgEl = _svgEl.querySelector(`[data-yid="${_selectedId}"]`);
+    if (!svgEl) return;
+    const success = layerForElement(svgEl) === 'toy' ? App.deleteToy(svgEl) : App.deleteShape(svgEl);
+    if (success) App.selectShape(null);
+  },
   duplicateSelected: () => {
     if (!_selectedId) return;
     const yEl = findShape(_yDrawing, _selectedId);
@@ -814,7 +834,7 @@ function onKeyDown(e) {
   if (e.key === 'c' || e.key === 'C') App.setTool('circle');
   if (e.key === 's' || e.key === 'S') App.setTool('select');
   if (e.key === 'Escape') App.selectShape(null);
-  if ((e.key === 'Delete' || e.key === 'Backspace') && _selectedId) App.deleteSelected();
+  if ((e.key === 'Delete' || e.key === 'Backspace')) App.deleteSelected();
   if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); App.undo(); }
 }
 
