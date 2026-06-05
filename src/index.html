@@ -174,16 +174,59 @@ document.querySelector('#canvas defs')
 window.UI  = UI;
 window.App = App;
 
-// ── Identity ────────────────────────────────────────────────────────────────
+// ── Player identity store ────────────────────────────────────────────────────
+// Persistent identity lives in IndexedDB 'crdt-svg-player', store 'identity'.
+// Keys: 'name' (display name), 'grad' (serialised gradient object).
+// home.html writes these via the same store when the profile panel is saved.
+function openPlayerStore() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('crdt-svg-player', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('identity');
+    req.onsuccess       = e => resolve(e.target.result);
+    req.onerror         = e => reject(e.target.error);
+  });
+}
+async function playerGet(db, key) {
+  return new Promise((res, rej) => {
+    const r = db.transaction('identity', 'readonly').objectStore('identity').get(key);
+    r.onsuccess = () => res(r.result ?? null);
+    r.onerror   = () => rej(r.error);
+  });
+}
+async function playerSet(db, key, value) {
+  return new Promise((res, rej) => {
+    const r = db.transaction('identity', 'readwrite').objectStore('identity').put(value, key);
+    r.onsuccess = () => res();
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+async function resolveIdentity() {
+  const db = await openPlayerStore();
+
+  let name = await playerGet(db, 'name');
+  if (!name) {
+    name = Math.random().toString(36).slice(2, 9);
+    await playerSet(db, 'name', name);
+  }
+
+  let gradRecord = await playerGet(db, 'grad');
+  if (!gradRecord) {
+    gradRecord = { gradSeed: name };
+    await playerSet(db, 'grad', gradRecord);
+  }
+
+  const grad = entityGradient(gradRecord.gradSeed);
+  return { name, grad };
+}
+
+// ── Identity ─────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
 let roomId = location.hash.slice(1);
 if (!roomId) { roomId = uid(); location.hash = roomId; }
-const myId    = uid();
-const myGrad = entityGradient(myId);
 
-// Read display name saved by home.html profile panel.
-const _profile     = (() => { try { return JSON.parse(localStorage.getItem('crdt_svg_profile')) || {}; } catch { return {}; } })();
-const myDisplayName = (_profile.name || '').trim() || myId.slice(0, 6);
+const { name: myDisplayName, grad: myGrad } = await resolveIdentity();
+const myId = uid();
 
 document.getElementById('roomLabel').textContent = roomId;
 document.getElementById('myIdLabel').textContent = `me: ${myDisplayName}`;

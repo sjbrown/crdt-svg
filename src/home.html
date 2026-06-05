@@ -472,8 +472,7 @@ body {
         Roadmap
       </a>
       <p class="footer-tagline">
-        Local-first · Peer-to-peer · No accounts · No tracking<br>
-        Open source · Public domain spirit
+        Local-first · Peer-to-peer · No accounts · No tracking · Open source
       </p>
     </div>
 
@@ -548,26 +547,37 @@ function drawGradientSwatch(canvas, name) {
 }
 
 // ── Storage ───────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'crdt_svg_profile';
-const TABLES_KEY  = 'crdt_svg_tables';
+const TABLES_KEY = 'crdt_svg_tables';
 
-function loadProfile() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
-}
-function saveProfile(p) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch {}
-}
 function loadTables() {
   try { return JSON.parse(localStorage.getItem(TABLES_KEY)) || []; } catch { return []; }
 }
 
-// ── Profile UI ────────────────────────────────────────────────────────────
-const PRESET_NAMES = [
-  'Seraphine','Aldric','Morrigan','Kestrel','Voss','Tamsin',
-  'Draven','Isolde','Cade','Riven'
-];
+// Player identity — same IndexedDB store as index.html reads.
+function openPlayerStore() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('crdt-svg-player', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('identity');
+    req.onsuccess       = e => resolve(e.target.result);
+    req.onerror         = e => reject(e.target.error);
+  });
+}
+async function playerGet(db, key) {
+  return new Promise((res, rej) => {
+    const r = db.transaction('identity', 'readonly').objectStore('identity').get(key);
+    r.onsuccess = () => res(r.result ?? null);
+    r.onerror   = () => rej(r.error);
+  });
+}
+async function playerSet(db, key, value) {
+  return new Promise((res, rej) => {
+    const r = db.transaction('identity', 'readwrite').objectStore('identity').put(value, key);
+    r.onsuccess = () => res();
+    r.onerror   = () => rej(r.error);
+  });
+}
 
-let profile = loadProfile();
+// ── Profile UI ────────────────────────────────────────────────────────────
 const ADJS = ['Wily','Deadly','Gaunt','Sallow','Brazen','Vexed','Hollow','Sullen','Grim','Feral',
   'Ashen','Dread','Craven','Stout','Wroth','Sunken','Brash','Pallid','Sly','Gnarled',
   'Bleak','Rusted','Sworn','Cursed','Rabid','Silent','Haunted','Gravel','Ireful','Knave'];
@@ -580,52 +590,77 @@ function randomName() {
   return `${adj} ${name}`;
 }
 
-if (!profile.name) profile.name = randomName();
-if (!profile.gradSeed) profile.gradSeed = profile.name || 'default_' + Date.now();
-saveProfile(profile);
+const PRESET_NAMES = [
+  'Seraphine','Aldric','Morrigan','Kestrel','Voss','Tamsin',
+  'Draven','Isolde','Cade','Riven'
+];
 
 const displayNameEl = document.getElementById('displayName');
 const swatchEl      = document.getElementById('gradientSwatch');
 const gradOptsEl    = document.getElementById('gradientOptions');
 
-displayNameEl.value = profile.name;
+// profile is loaded async; UI is wired up once it resolves.
+let _playerDb  = null;
+let _gradSeed  = null;
+
+async function initProfile() {
+  _playerDb = await openPlayerStore();
+
+  let name = await playerGet(_playerDb, 'name');
+  if (!name) {
+    name = randomName();
+    await playerSet(_playerDb, 'name', name);
+  }
+
+  let grad = await playerGet(_playerDb, 'grad');
+  _gradSeed = grad ? grad.gradSeed : name;
+  if (!grad) {
+    grad = { gradSeed: name };
+    await playerSet(_playerDb, 'grad', grad);
+  }
+
+  displayNameEl.value = name;
+  refreshSwatch();
+  renderGradOptions();
+}
 
 function refreshSwatch() {
-  const seed = profile.gradSeed || profile.name || 'anonymous';
-  drawGradientSwatch(swatchEl, seed);
+  drawGradientSwatch(swatchEl, _gradSeed || 'anonymous');
 }
-refreshSwatch();
 
-// Preset gradient dots
-PRESET_NAMES.forEach(n => {
-  const c = document.createElement('canvas');
-  c.className = 'grad-option';
-  c.width = 26; c.height = 26;
-  if (n === profile.gradSeed) c.classList.add('active');
-  drawGradientSwatch(c, n);
-  c.title = n;
-  c.addEventListener('click', () => {
-    document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    profile.gradSeed = n;
-    saveProfile(profile);
-    refreshSwatch();
+function renderGradOptions() {
+  gradOptsEl.innerHTML = '';
+  PRESET_NAMES.forEach(n => {
+    const c = document.createElement('canvas');
+    c.className = 'grad-option';
+    c.width = 26; c.height = 26;
+    if (n === _gradSeed) c.classList.add('active');
+    drawGradientSwatch(c, n);
+    c.title = n;
+    c.addEventListener('click', async () => {
+      _gradSeed = n;
+      document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      await playerSet(_playerDb, 'grad', { gradSeed: n });
+      refreshSwatch();
+    });
+    gradOptsEl.appendChild(c);
   });
-  gradOptsEl.appendChild(c);
-});
+}
 
-swatchEl.addEventListener('click', () => {
-  const seed = 'rng_' + Math.random().toString(36).slice(2);
-  profile.gradSeed = seed;
+swatchEl.addEventListener('click', async () => {
+  _gradSeed = 'rng_' + Math.random().toString(36).slice(2);
   document.querySelectorAll('.grad-option').forEach(x => x.classList.remove('active'));
-  saveProfile(profile);
+  await playerSet(_playerDb, 'grad', { gradSeed: _gradSeed });
   refreshSwatch();
 });
 
-displayNameEl.addEventListener('input', () => {
-  profile.name = displayNameEl.value.trim();
-  saveProfile(profile);
+displayNameEl.addEventListener('input', async () => {
+  const name = displayNameEl.value.trim();
+  if (_playerDb) await playerSet(_playerDb, 'name', name);
 });
+
+initProfile();
 
 // ── Previous tables ───────────────────────────────────────────────────────
 function renderTables() {
@@ -901,7 +936,7 @@ function generateRoomId() {
   const dd    = String(new Date().getDate()).padStart(2, '0');
   const chars = 'abcdefghijklmnopqrstuvwxyz';
   const rand  = Array.from({length: 3}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
-  const name  = (loadProfile().name || '').trim();
+  const name  = displayNameEl.value.trim();
   const slug  = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')   // special chars → hyphen
