@@ -59,7 +59,7 @@ let _ydoc, _yMeta, _yToys, _yToyMeta, _yDrawing, _yDrawingMeta, _awareness, _pro
 let _myId, _myGrad, _roomId;
 let _svgEl;
 let _selectedId   = null;
-let _activeLayer  = 'drawing';
+let _activeLayer  = 'toys';
 let _activeTool   = 'select';
 let _offline      = false;
 let _undoStack    = [];      // { op:'add'|'del'|'move', ...data }

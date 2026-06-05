@@ -1146,7 +1146,10 @@ async function seedRoom(roomId, sampleSvgEl) {
       for (const child of toysLayerEl.children) {
         if (isToyG(child)) {
           const yG = domToY(child);
-          if (yG) yToys.insert(yToys.length, [yG]);
+          if (yG) {
+            yG.removeAttribute('transform'); // decorative rotation, not part of doc
+            yToys.insert(yToys.length, [yG]);
+          }
         }
       }
     }
