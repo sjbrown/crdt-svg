@@ -122,6 +122,15 @@ export function applyMoveCommit(ydoc, yEl, x, y) {
   ydoc.transact(() => yEl.setAttribute('d', rectToPath(x, y, w, h)));
 }
 
+/**
+ * Set all four dimensions of a boundary in one transaction.
+ * Used by the Edit panel when the user changes position or size directly.
+ */
+export function setBounPosRect(ydoc, yEl, x, y, w, h) {
+  if (!yEl) return;
+  ydoc.transact(() => yEl.setAttribute('d', rectToPath(x, y, w, h)));
+}
+
 // ── DOM rendering ─────────────────────────────────────────────────────────────
 
 /**
@@ -219,4 +228,41 @@ export function bounPosData(yBounPos, yBounPosMeta) {
     fill:  'none',
     kind:  'boundary',
   }));
+}
+
+// ── Edit schema ───────────────────────────────────────────────────────────────
+
+/**
+ * Return the edit schema for a rendered boundary element.
+ * The name is read from the `data-boundary-name` attribute on the
+ * inner <text> element, which mirrors the Yjs `name` attribute.
+ */
+export function getEditSchema(svgEl) {
+  const name = svgEl.querySelector('[data-boundary-name]')
+                    ?.getAttribute('data-boundary-name') ?? '';
+  return {
+    name,
+    types: {
+      name: 'string',
+    },
+  };
+}
+
+/**
+ * Apply an editData object to a boundary Yjs element.
+ * Updates both the `name` attribute on the element and the yBounPosMeta sidecar.
+ * Called by App.commitEdit — never called directly from the UI.
+ */
+export function edit(ydoc, yEl, yBounPosMeta, editData) {
+  if (!yEl) return;
+  const { name } = editData;
+  if (name === undefined) return;
+  const id = yEl.getAttribute('id');
+  ydoc.transact(() => {
+    yEl.setAttribute('name', String(name));
+    if (id) {
+      const meta = yBounPosMeta.get(id) ?? {};
+      yBounPosMeta.set(id, { ...meta, name });
+    }
+  });
 }

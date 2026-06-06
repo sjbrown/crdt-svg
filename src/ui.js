@@ -34,7 +34,6 @@ export const UIData = {
 
 let App = null;
 const $ = s => document.querySelector(s);
-const PANEL_W = 300;
 
 // -- Init ----------------------------------------------------------------------
 export function init(appBus) {
@@ -176,12 +175,83 @@ export function onSelectionChanged(elId, drawingMeta) {
   UIData.selectionActive = !!elId;
   renderPill();
   refreshLayerList();
+  // Keep the Edit panel live — re-render it whenever the selection changes.
+  if (UIData.panelOpen === 'edit') {
+    const body = $('#panelBody');
+    if (body) body.innerHTML = editBody(gatherEditData());
+  }
   if (elId && drawingMeta) toast(`${drawingMeta.type ?? 'Shape'} selected`, 'info');
 }
 
 // ==============================================================================
-//  TOOL OPTIONS (generic, schema-driven)
+//  EDIT PANEL — live, schema-driven view of the selected element's attributes
 // ==============================================================================
+
+function gatherEditData() {
+  return {
+    element: App.getElementEditSchema?.() ?? null,
+    palette: App.getPalette(),
+  };
+}
+
+/**
+ * Render one field from the edit schema.
+ * `typeSpec` is either a string shorthand ('string', 'color-hslo', 'color-hsl')
+ * or an object { type:'number', min?, max?, step? }.
+ * The generated onchange/onclick calls App.commitEdit with a single-key object.
+ */
+function renderEditField(key, value, typeSpec, id, palette) {
+  const label = `<label>${key}</label>`;
+
+  if (typeSpec === 'color-hslo' || typeSpec === 'color-hsl') {
+    // color-hslo allows 'none'; color-hsl is fully opaque (no transparency).
+    const colors  = typeSpec === 'color-hslo' ? ['none', ...palette] : palette;
+    const swatches = colors.map(c => {
+      const isNone = c === 'none';
+      return `<div class="sw ${value === c ? 'active' : ''}"
+        style="background:${isNone ? 'transparent' : c};${isNone ? 'border:1.5px dashed var(--border-2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-3)' : ''}"
+        onclick="App.commitEdit('${id}',{'${key}':'${c}'})"
+        title="${c}">${isNone ? '∅' : ''}</div>`;
+    }).join('');
+    return `<div class="field">${label}<div class="swatches">${swatches}</div></div>`;
+  }
+
+  if (typeSpec === 'string') {
+    const safe = String(value ?? '').replace(/"/g, '&quot;');
+    return `<div class="field">${label}<input type="text" value="${safe}"
+      style="width:100%;font-size:13px;padding:5px 8px;background:var(--surface-2);border:none;color:var(--text);border-radius:4px;box-sizing:border-box;font-family:ui-monospace,monospace"
+      onchange="App.commitEdit('${id}',{'${key}':this.value})"/></div>`;
+  }
+
+  if (typeof typeSpec === 'object' && typeSpec.type === 'number') {
+    const { min, max, step = 1 } = typeSpec;
+    return `<div class="field">${label}<input type="number" value="${value ?? 0}"
+      ${min !== undefined ? `min="${min}"` : ''}
+      ${max !== undefined ? `max="${max}"` : ''}
+      step="${step}"
+      style="width:100%;font-size:13px;padding:5px 8px;background:var(--surface-2);border:none;color:var(--text);border-radius:4px;text-align:right;box-sizing:border-box"
+      onchange="App.commitEdit('${id}',{'${key}':Number(this.value)})"/></div>`;
+  }
+
+  return ''; // unknown type — omit field
+}
+
+export function editBody(data) {
+  if (!data.element) {
+    return `<div style="text-align:center;padding:48px 20px 0;color:var(--text-3)">
+      <div style="font-size:28px;margin-bottom:14px;opacity:.35">✦</div>
+      <div style="font-size:14px;line-height:1.6">Select an object<br>to edit its properties</div>
+    </div>`;
+  }
+  const { ltype, id, types, ...values } = data.element;
+  const header = `<div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">${ltype.replace('boundaries-positions','boundary')} · <span style="font-family:ui-monospace,monospace;font-weight:normal">${id.slice(0,16)}</span></div>`;
+  const fields  = Object.entries(types)
+    .map(([key, typeSpec]) => renderEditField(key, values[key], typeSpec, id, data.palette))
+    .join('');
+  return header + fields;
+}
+
+
 
 /**
  * toolOptsHTML(data) -- PURE.
@@ -253,7 +323,10 @@ export function refreshToolOpts() {
 // ==============================================================================
 //  PANEL
 // ==============================================================================
+const PANEL_W = 340;
+
 const PANEL_TABS = [
+  { id: 'edit',    label: 'Edit',    iconId: 'edit-tab' },
   { id: 'tools',   label: 'Tools',   iconId: 'rect' },
   { id: 'layers',  label: 'Layers',  iconId: 'layers' },
   { id: 'peers',   label: 'Peers',   iconId: 'peers' },
@@ -261,7 +334,7 @@ const PANEL_TABS = [
   { id: 'save',    label: 'Save',    iconId: 'save' },
 ];
 const PANEL_TITLES = {
-  tools:'Properties', peers:'Peers & sharing', history:'History & undo',
+  edit: 'Edit', tools:'Properties', peers:'Peers & sharing', history:'History & undo',
   layers:'Layers', save:'File', gestures:'Gestures & help',
 };
 
@@ -287,6 +360,7 @@ export function openSheet(which) {
   const body = $('#panelBody');
   if (body) {
     body.innerHTML = ({
+      edit:     () => editBody(gatherEditData()),
       tools:    () => toolsBody(gatherToolsData()),
       peers:    () => peersBody(gatherPeersData()),
       history:  () => histBody(App.getHistory()),
@@ -586,7 +660,8 @@ export function refreshFromDoc() {
   const body = $('#panelBody');
   if (!body) return;
   switch (UIData.panelOpen) {
-    case 'history': body.innerHTML = histBody(App.getHistory()); break;
+    case 'edit':    body.innerHTML = editBody(gatherEditData());   break;
+    case 'history': body.innerHTML = histBody(App.getHistory());   break;
     case 'layers':  body.innerHTML = layersBody(gatherLayersData()); break;
     case 'tools':   body.innerHTML = toolsBody(gatherToolsData()); break;
   }

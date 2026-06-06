@@ -25,13 +25,17 @@ import { SHAPE_TYPES, addDrawing, deleteDrawing,
          findDrawing, listDrawings, drawingsData,
          getGeom as drawingGeom,
          getAnchor as drawingAnchor,
-         applyMoveCommit as drawingApplyMoveCommit } from './drawing.js';
+         applyMoveCommit as drawingApplyMoveCommit,
+         getEditSchema as drawingGetEditSchema,
+         edit as drawingEdit } from './drawing.js';
 import { TOOLS as TOY_TOOLS,
          TOY_TYPES, addToy, deleteToy, findToy,
          listToys, toysData,
          getGeom as toyGeom,
          getAnchor as toyAnchor,
          applyMoveCommit as toyApplyMoveCommit,
+         getEditSchema as toyGetEditSchema,
+         edit as toyEdit,
        }  from './toys.js';
 import { SELECT_TOOL }                            from './tools-schema.js';
 import { TOOLS as DRAW_TOOLS, LAYER as DRAW_LAYER }  from './tools-drawing.js';
@@ -41,7 +45,10 @@ import { newBounPosId, rectToPath, pathToRect,
          listBounPos, bounPosData,
          getGeom as bounPosGeom,
          getAnchor as bounPosAnchor,
-         applyMoveCommit as bounPosApplyMoveCommit } from './boun_pos.js';
+         applyMoveCommit as bounPosApplyMoveCommit,
+         setBounPosRect,
+         getEditSchema as bounPosGetEditSchema,
+         edit as bounPosEdit } from './boun_pos.js';
 import * as UI                                    from './ui.js';
 import * as Canvas                                from './canvas.js';
 import * as Overlay                               from './overlay.js';
@@ -287,7 +294,9 @@ function renderToysLayer() {
   if (!layer) return;
   layer.innerHTML = '';
 
-  listToys(_yToys, _yToyMeta).forEach(({ svgEl }) => {
+  listToys(_yToys, _yToyMeta).forEach(({ svgEl, meta }) => {
+    // Stamp color so toys.getEditSchema(svgEl) can read it without meta access.
+    if (meta?.color) svgEl.dataset.toyColor = meta.color;
     svgEl.style.cursor = 'grab';
     layer.appendChild(svgEl);
   });
@@ -582,6 +591,53 @@ const App = {
     const yEl = findBounPos(_yBounPos, _selectedId);
     const name = yEl?.getAttribute('name') ?? _selectedId;
     return { id: _selectedId, name };
+  },
+
+  /**
+   * Return the edit schema for the currently selected element, decorated
+   * with `ltype` and `id`.  Returns null when nothing is selected.
+   *
+   * Delegates to the layer-scoped module's getEditSchema(svgEl) so that
+   * app.js stays ignorant of per-type field definitions.
+   */
+  getElementEditSchema: () => {
+    if (!_selectedId) return null;
+    const svgEl = _svgEl?.querySelector(`[data-yid="${_selectedId}"]`);
+    if (!svgEl) return null;
+    const ltype = layerForElement(svgEl);
+    let schema;
+    if (ltype === 'drawing') {
+      schema = drawingGetEditSchema(svgEl);
+    } else if (ltype === 'toy') {
+      schema = toyGetEditSchema(svgEl);
+    } else if (ltype === 'boundaries-positions') {
+      schema = bounPosGetEditSchema(svgEl);
+    } else {
+      return null;
+    }
+    return { ltype, id: _selectedId, ...schema };
+  },
+
+  /**
+   * Apply a partial editData object to the selected element.
+   * Dispatches to the appropriate module's edit() function, which handles
+   * the Yjs transaction.  App.commitEdit is the single entry point that
+   * the Edit panel UI calls for all element mutations.
+   */
+  commitEdit: (id, editData) => {
+    const svgEl = _svgEl?.querySelector(`[data-yid="${id}"]`);
+    if (!svgEl) return;
+    const ltype = layerForElement(svgEl);
+    if (ltype === 'drawing') {
+      drawingEdit(_ydoc, findDrawing(_yDrawing, id), editData);
+    } else if (ltype === 'toy') {
+      toyEdit(_ydoc, findToy(_yToys, id), _yToyMeta, editData);
+    } else if (ltype === 'boundaries-positions') {
+      bounPosEdit(_ydoc, findBounPos(_yBounPos, id), _yBounPosMeta, editData);
+    }
+    // observeDeep fires synchronously → renderDoc() already ran.
+    // Refresh the Edit panel body to show the updated values.
+    UI.refreshFromDoc();
   },
 
   commitToy: (toolName, x, y) => {
