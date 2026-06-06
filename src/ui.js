@@ -188,9 +188,13 @@ export function onSelectionChanged(elId, drawingMeta) {
 // ==============================================================================
 
 function gatherEditData() {
+  const element = App.getElementEditSchema?.() ?? null;
   return {
-    element: App.getElementEditSchema?.() ?? null,
-    palette: App.getPalette(),
+    element,
+    palette:    App.getPalette(),
+    toyClasses: element?.ltype === 'boundaries-positions'
+                  ? (App.getToyClasses?.() ?? [])
+                  : null,
   };
 }
 
@@ -248,7 +252,10 @@ export function editBody(data) {
   const fields  = Object.entries(types)
     .map(([key, typeSpec]) => renderEditField(key, values[key], typeSpec, id, data.palette))
     .join('');
-  return header + fields;
+  const help = ltype === 'boundaries-positions'
+    ? bounPosHelpHTML(data.toyClasses ?? [])
+    : '';
+  return header + fields + help;
 }
 
 
@@ -469,6 +476,38 @@ function defaultToolsBody(data) {
     </div>`;
 }
 
+/**
+ * Shared "How boundaries work" help block — rendered in both the Tools panel
+ * (bounPosToolsBody) and the Edit panel (editBody for boundary elements).
+ * `toyClasses` is the live list returned by App.getToyClasses().
+ */
+function bounPosHelpHTML(toyClasses) {
+  const classSection = toyClasses.length > 0
+    ? `<div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Toy classes in this document</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;font-family:ui-monospace,monospace;color:var(--text-2);line-height:1.9">
+          ${toyClasses.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px">Name a boundary after one of these classes to activate the constraint for toys that carry it.</div>
+      </div>`
+    : `<div style="margin-top:8px;font-size:12px;color:var(--text-3);font-style:italic">No class names found on toys yet. Add CSS classes to a toy's &lt;g&gt; or inner &lt;svg&gt; to enable boundary constraints.</div>`;
+
+  return `<div class="field" style="margin-top:12px">
+    <label>How boundaries work</label>
+    <div style="font-size:12px;color:var(--text-2);line-height:1.7">
+      Draw a boundary region, then give it a name. Any toy whose
+      <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;g&gt;</code>
+      or inner
+      <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;svg&gt;</code>
+      carries that name as a CSS class will be constrained to move
+      only within boundaries of that name — jumping freely between
+      multiple regions that share the class, but unable to leave them all.
+    </div>
+    ${classSection}
+    <div style="font-size:11px;color:var(--text-3);margin-top:10px">Toggle layer visibility with the eye icon in the Layers panel.</div>
+  </div>`;
+}
+
 function bounPosToolsBody(data) {
   const toolBtn = t =>
     `<div class="tool ${data.activeTool === t.name ? 'active' : ''}" onclick="App.setTool('${t.name}')">${t.icon}<span>${t.label}</span></div>`;
@@ -485,37 +524,12 @@ function bounPosToolsBody(data) {
       </div>`
     : '';
 
-  // Dynamic class list — every CSS class currently on any toy in the doc
-  const toyClasses = data.toyClasses ?? [];
-  const classSection = toyClasses.length > 0
-    ? `<div style="margin-top:8px">
-        <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Toy classes in this document</div>
-        <ul style="margin:0;padding-left:18px;font-size:12px;font-family:ui-monospace,monospace;color:var(--text-2);line-height:1.9">
-          ${toyClasses.map(c => `<li>${c}</li>`).join('')}
-        </ul>
-        <div style="font-size:11px;color:var(--text-3);margin-top:6px">Name a boundary after one of these classes to activate the constraint for toys that carry it.</div>
-      </div>`
-    : `<div style="margin-top:8px;font-size:12px;color:var(--text-3);font-style:italic">No class names found on toys yet. Add CSS classes to a toy's &lt;g&gt; or inner &lt;svg&gt; to enable boundary constraints.</div>`;
-
   return `
     <div class="field"><label>Tool · Boundaries and Positions</label>
       <div class="tool-grid">${data.tools.map(toolBtn).join('')}</div>
     </div>
     ${nameField}
-    <div class="field" style="margin-top:12px">
-      <label>How boundaries work</label>
-      <div style="font-size:12px;color:var(--text-2);line-height:1.7">
-        Draw a boundary region, then give it a name. Any toy whose
-        <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;g&gt;</code>
-        or inner
-        <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;svg&gt;</code>
-        carries that name as a CSS class will be constrained to move
-        only within boundaries of that name — jumping freely between
-        multiple regions that share the class, but unable to leave them all.
-      </div>
-      ${classSection}
-      <div style="font-size:11px;color:var(--text-3);margin-top:10px">Toggle layer visibility with the eye icon in the Layers panel.</div>
-    </div>`;
+    ${bounPosHelpHTML(data.toyClasses ?? [])}`;
 }
 
 const LAYER_TOOLS_BODY = {
