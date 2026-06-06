@@ -318,6 +318,7 @@ function gatherToolsData() {
     fill:       App.getToolParams(UIData.activeTool)?.fill,
     background: App.getBackground(),
     defaultBackgrounds: App.getDefaultBackgrounds(),
+    selectedBoundary: layer === 'boundaries-positions' ? App.getSelectedBounPos?.() : null,
   };
 }
 function gatherPeersData() {
@@ -392,10 +393,36 @@ function defaultToolsBody(data) {
     </div>`;
 }
 
+function boundaryToolsBody(data) {
+  const toolBtn = t =>
+    `<div class="tool ${data.activeTool === t.name ? 'active' : ''}" onclick="App.setTool('${t.name}')">${t.icon}<span>${t.label}</span></div>`;
+  const nameField = data.selectedBoundary
+    ? `<div class="field">
+        <label>Boundary name</label>
+        <input type="text" class="text-input"
+          value="${data.selectedBoundary.name}"
+          placeholder="boundary name"
+          onchange="App.renameBounPos('${data.selectedBoundary.id}', this.value)"
+          style="width:100%;font-size:13px;font-family:ui-monospace,monospace"/>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px">ID: ${data.selectedBoundary.id}</div>
+      </div>`
+    : '';
+  return `
+    <div class="field"><label>Tool · boundaries layer</label>
+      <div class="tool-grid">${data.tools.map(toolBtn).join('')}</div>
+    </div>
+    ${nameField}
+    <div style="font-size:12px;color:var(--text-3);margin-top:4px;padding:0 2px">
+      Boundaries are named regions that can constrain where toys are placed.
+      Toggle layer visibility in the Layers panel.
+    </div>`;
+}
+
 const LAYER_TOOLS_BODY = {
-  background: (data) => bgToolsBody(data),
-  toys:       (data) => defaultToolsBody(data),
-  drawing:    (data) => defaultToolsBody(data),
+  background:             (data) => bgToolsBody(data),
+  'boundaries-positions': (data) => boundaryToolsBody(data),
+  toys:                   (data) => defaultToolsBody(data),
+  drawing:                (data) => defaultToolsBody(data),
 };
 export function toolsBody(data) {
   const render = LAYER_TOOLS_BODY[data.layer] ?? defaultToolsBody;
@@ -493,8 +520,13 @@ export function layersBody(data) {
         ? `<div class="layer-obj-list"><div class="layer-obj-empty"><a href="#" onclick="UI.openSheet('tools');return false" style="color:var(--primary);text-decoration:none">Change background</a></div></div>`
         : `<div class="layer-obj-list">${layerObjectListHTML(l.objects ?? [], data.selectedId)}</div>`;
     }
+    const visBtn = `<button class="layer-vis-btn" title="${l.visible ? 'Hide layer' : 'Show layer'}"
+         onclick="UI.toggleLayerVisibility('${l.id}');event.stopPropagation()"
+         style="background:none;border:none;cursor:pointer;padding:2px 4px;color:${l.visible ? 'var(--primary)' : 'var(--text-3)'}">
+         ${icon(l.visible ? 'eye' : 'eye-off')}
+       </button>`;
     return `<div class="layer-block">
-      <div class=\"layer ${isActive ? 'active' : ''}\" id=\"layer-row-${l.id}\" onclick=\"UI.selectLayer('${l.id}')\">${icon(l.iconId)} <span>${l.label}</span>${l.id !== 'background' ? `<span class="lmeta">${l.count} object${l.count !== 1 ? 's' : ''}</span>` : ''}</div>
+      <div class=\"layer ${isActive ? 'active' : ''}\" id=\"layer-row-${l.id}\" onclick=\"UI.selectLayer('${l.id}')\">${icon(l.iconId)} <span>${l.label}</span>${l.id !== 'background' ? `<span class="lmeta">${l.count} object${l.count !== 1 ? 's' : ''}</span>` : ''}${visBtn}</div>
       ${objList}
     </div>`;
   }).join('');
@@ -503,6 +535,11 @@ export function layersBody(data) {
       ${rows}
       <div style="font-size:12px;color:var(--text-3);margin-top:10px">New objects are added to the active layer.</div>
     </div>`;
+}
+
+export function toggleLayerVisibility(id) {
+  const layer = App.getLayers().find(l => l.id === id);
+  App.setLayerVisible(id, !(layer?.visible ?? false));
 }
 
 export function selectLayer(id) {
