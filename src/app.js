@@ -213,7 +213,7 @@ export function boot({ ydoc, yMeta, yToys, yToyMeta, yDrawing, yDrawingMeta, yBo
  * whose name appears in those class lists.  Returns null when the toy has no
  * class-based boundary membership (unconstrained drag).
  */
-function computeToyBoundsRects(domEl) {
+function computeToyBoundsRects(domEl, anchor) {
   const toyClasses = new Set([
     ...domEl.classList,
     ...(domEl.querySelector('svg')?.classList ?? []),
@@ -230,7 +230,15 @@ function computeToyBoundsRects(domEl) {
     const { x, y, w, h } = pathToRect(d);
     rects.push({ x, y, w, h });
   }
-  return rects.length > 0 ? rects : null;
+  if (rects.length === 0) return null;
+
+  // If the toy is already outside every matched boundary when the drag starts,
+  // treat it as context-free so it can move without restriction.
+  const startsInside = rects.some(
+    r => anchor.x >= r.x && anchor.x <= r.x + r.w &&
+         anchor.y >= r.y && anchor.y <= r.y + r.h
+  );
+  return startsInside ? rects : null;
 }
 
 function renderDoc() {
@@ -555,6 +563,18 @@ const App = {
     UI.refreshFromDoc();
   },
 
+  // Returns a sorted, deduplicated array of every CSS class name found on any
+  // toy's wrapper <g> or inner <svg> currently in the document.  Used by the
+  // Boundaries and Positions tools panel to suggest linkable class names.
+  getToyClasses: () => {
+    const classes = new Set();
+    _svgEl?.querySelectorAll('[data-layer-type="toy"]').forEach(g => {
+      g.classList.forEach(c => classes.add(c));
+      g.querySelector('svg')?.classList.forEach(c => classes.add(c));
+    });
+    return [...classes].sort();
+  },
+
   getSelectedBounPos: () => {
     if (!_selectedId) return null;
     const svgEl = _svgEl?.querySelector(`[data-yid="${_selectedId}"]`);
@@ -641,7 +661,7 @@ const App = {
     const anchor = App.getAnchor(domEl);
     const bbox = App.getBBox(id);
     const isToy = layerForElement(domEl) === 'toy';
-    const boundsRects = isToy ? computeToyBoundsRects(domEl) : null;
+    const boundsRects = isToy ? computeToyBoundsRects(domEl, anchor) : null;
     _dragState = { id, startX: anchor.x, startY: anchor.y,
       startBboxX: bbox.x,
       startBboxY: bbox.y,

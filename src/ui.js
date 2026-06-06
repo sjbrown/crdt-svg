@@ -310,6 +310,7 @@ export function closePanel() {
 // -- Data gatherers (impure) ---------------------------------------------------
 function gatherToolsData() {
   const layer = App.getActiveLayer();
+  const isBounPos = layer === 'boundaries-positions';
   return {
     layer,
     activeTool: UIData.activeTool,
@@ -318,7 +319,8 @@ function gatherToolsData() {
     fill:       App.getToolParams(UIData.activeTool)?.fill,
     background: App.getBackground(),
     defaultBackgrounds: App.getDefaultBackgrounds(),
-    selectedBoundary: layer === 'boundaries-positions' ? App.getSelectedBounPos?.() : null,
+    selectedBoundary: isBounPos ? App.getSelectedBounPos?.() : null,
+    toyClasses:       isBounPos ? (App.getToyClasses?.() ?? []) : null,
   };
 }
 function gatherPeersData() {
@@ -393,9 +395,10 @@ function defaultToolsBody(data) {
     </div>`;
 }
 
-function boundaryToolsBody(data) {
+function bounPosToolsBody(data) {
   const toolBtn = t =>
     `<div class="tool ${data.activeTool === t.name ? 'active' : ''}" onclick="App.setTool('${t.name}')">${t.icon}<span>${t.label}</span></div>`;
+
   const nameField = data.selectedBoundary
     ? `<div class="field">
         <label>Boundary name</label>
@@ -407,20 +410,43 @@ function boundaryToolsBody(data) {
         <div style="font-size:11px;color:var(--text-3);margin-top:4px">ID: ${data.selectedBoundary.id}</div>
       </div>`
     : '';
+
+  // Dynamic class list — every CSS class currently on any toy in the doc
+  const toyClasses = data.toyClasses ?? [];
+  const classSection = toyClasses.length > 0
+    ? `<div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Toy classes in this document</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;font-family:ui-monospace,monospace;color:var(--text-2);line-height:1.9">
+          ${toyClasses.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px">Name a boundary after one of these classes to activate the constraint for toys that carry it.</div>
+      </div>`
+    : `<div style="margin-top:8px;font-size:12px;color:var(--text-3);font-style:italic">No class names found on toys yet. Add CSS classes to a toy's &lt;g&gt; or inner &lt;svg&gt; to enable boundary constraints.</div>`;
+
   return `
-    <div class="field"><label>Tool · boundaries layer</label>
+    <div class="field"><label>Tool · Boundaries and Positions</label>
       <div class="tool-grid">${data.tools.map(toolBtn).join('')}</div>
     </div>
     ${nameField}
-    <div style="font-size:12px;color:var(--text-3);margin-top:4px;padding:0 2px">
-      Boundaries are named regions that can constrain where toys are placed.
-      Toggle layer visibility in the Layers panel.
+    <div class="field" style="margin-top:12px">
+      <label>How boundaries work</label>
+      <div style="font-size:12px;color:var(--text-2);line-height:1.7">
+        Draw a boundary region, then give it a name. Any toy whose
+        <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;g&gt;</code>
+        or inner
+        <code style="font-size:11px;background:var(--surface-2);padding:1px 4px;border-radius:3px">&lt;svg&gt;</code>
+        carries that name as a CSS class will be constrained to move
+        only within boundaries of that name — jumping freely between
+        multiple regions that share the class, but unable to leave them all.
+      </div>
+      ${classSection}
+      <div style="font-size:11px;color:var(--text-3);margin-top:10px">Toggle layer visibility with the eye icon in the Layers panel.</div>
     </div>`;
 }
 
 const LAYER_TOOLS_BODY = {
   background:             (data) => bgToolsBody(data),
-  'boundaries-positions': (data) => boundaryToolsBody(data),
+  'boundaries-positions': (data) => bounPosToolsBody(data),
   toys:                   (data) => defaultToolsBody(data),
   drawing:                (data) => defaultToolsBody(data),
 };
