@@ -640,7 +640,7 @@ export function layersBody(data) {
          ${icon(l.visible ? 'eye' : 'eye-off')}
        </button>`;
     return `<div class="layer-block">
-      <div class=\"layer ${isActive ? 'active' : ''}\" id=\"layer-row-${l.id}\" onclick=\"UI.selectLayer('${l.id}')\">${icon(l.iconId)} <span>${l.label}</span>${l.id !== 'background' ? `<span class="lmeta">${l.count} object${l.count !== 1 ? 's' : ''}</span>` : ''}${visBtn}</div>
+      <div class=\"layer ${isActive ? 'active' : ''}\" id=\"layer-row-${l.id}\" onclick=\"UI.selectLayer('${l.id}')\">${icon(l.iconId)} <span>${l.label}</span><span class="lmeta">${l.id !== 'background' ? `${l.count} object${l.count !== 1 ? 's' : ''}` : ''}</span>${visBtn}</div>
       ${objList}
     </div>`;
   }).join('');
