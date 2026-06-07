@@ -16,7 +16,7 @@ import {
   // Grid math
   generateSquareGrid, generateHexGrid, gridFillExtent, computeMaxSnapRadius,
   // CRDT
-  addBoundary, addPositionSet, findEl, deleteEl, renameBounPos, applyMoveCommit,
+  addBoundary, addPositionSet, createPositionSetElement, findEl, deleteEl, renameBounPos, applyMoveCommit,
   // Layer API
   renderLayer, layerData,
   // Geometry queries
@@ -51,7 +51,7 @@ function addPS(layer, overrides = {}) {
   const genType  = overrides.genType  ?? 'square';
   const genParam = overrides.genParam ?? 80;
   const circles = gridFillExtent(x, y, w, h, genType, genParam);
-  addPositionSet(layer.ydoc, layer.yBounPos, layer.yBounPosMeta, {
+  createPositionSetElement(layer.ydoc, layer.yBounPos, layer.yBounPosMeta, {
     id, name, snapRadius: 30, genType, genParam, x, y, w, h, circles, author: 'test',
     ...overrides, id, name,
   });
