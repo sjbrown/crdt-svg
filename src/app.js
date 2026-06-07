@@ -42,6 +42,7 @@ import { TOOLS as DRAW_TOOLS, LAYER as DRAW_LAYER }  from './tools-drawing.js';
 import { TOOLS as BOUNPOS_TOOLS, LAYER as BOUNPOS_LAYER } from './tools-boun_pos.js';
 import { newBoundaryId, newPositionSetId, rectToPath, pathToRect,
          addBoundary, addPositionSet,
+         commitPositionSet as bounPosCommitPositionSet,
          findEl          as bounPosFindEl,
          deleteEl        as bounPosDeleteEl,
          renameBounPos,
@@ -556,22 +557,17 @@ const App = {
   },
 
   commitPositionSet: ({ x, y, w, h, toolName }) => {
-    const params    = App.getToolParams(toolName);
-    const genType   = toolName === 'pos-grid-hex' ? 'hex' : 'square';
-    const genParam  = genType === 'hex'
-      ? (params['hex-size']  ?? 40)
-      : (params['spacing']   ?? 80);
-    const rawRadius  = params['snap-radius'] ?? 30;
-    const snapRadius = Math.min(rawRadius, computeMaxSnapRadius(genType, genParam));
-    const circles    = gridFillExtent(x, y, w, h, genType, genParam);
-    if (circles.length === 0) return;          // extent too small
-    const { id, name } = newPositionSetId();
-    addPositionSet(_ydoc, _yBounPos, _yBounPosMeta,
-      { id, name, snapRadius, genType, genParam, x, y, w, h, circles, author: _myId });
-    _undoStack.push({ op: 'add', layer: 'boundaries-positions', bounPosType: 'pos-set', id });
-    addHistory(`added ${genType} snap grid ${name}`, { elType: 'boundaries-positions' });
-    App.addLog(`added ${genType} snap grid ${name}`, 'local');
-    App.select(id);
+    const params = App.getToolParams(toolName);
+    const result = bounPosCommitPositionSet(_ydoc, _yBounPos, _yBounPosMeta,
+      { x, y, w, h, toolName, toolParams: params, author: _myId });
+
+    if (!result) return;  // extent too small
+
+    // App-level concerns: undo, history, logs, UI selection
+    _undoStack.push({ op: 'add', layer: 'boundaries-positions', bounPosType: 'pos-set', id: result.id });
+    addHistory(`added ${result.genType} snap grid ${result.name}`, { elType: 'boundaries-positions' });
+    App.addLog(`added ${result.genType} snap grid ${result.name}`, 'local');
+    App.select(result.id);
   },
 
   renameBounPos: (id, newName) => {

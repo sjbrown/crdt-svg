@@ -251,6 +251,36 @@ export function updatePositionSetSnapRadius(ydoc, yGEl, newRadius) {
   });
 }
 
+/**
+ * Create a new position set from draw parameters.
+ * Computes genType, genParam, snapRadius, and grid circles; calls addPositionSet.
+ * Returns { id, name, genType } or null if extent too small.
+ * Call this from app.js commit handler; app handles undo/history/logs/selection.
+ */
+export function commitPositionSet(ydoc, yBounPos, yBounPosMeta,
+  { x, y, w, h, toolName, toolParams, author }) {
+  // Derive genType and genParam from toolName + toolParams
+  const genType = toolName === 'pos-grid-hex' ? 'hex' : 'square';
+  const genParam = genType === 'hex'
+    ? (toolParams['hex-size'] ?? 40)
+    : (toolParams['spacing'] ?? 80);
+
+  // Compute snapRadius clamped to max
+  const rawRadius = toolParams['snap-radius'] ?? 30;
+  const snapRadius = Math.min(rawRadius, computeMaxSnapRadius(genType, genParam));
+
+  // Generate grid circles
+  const circles = gridFillExtent(x, y, w, h, genType, genParam);
+  if (circles.length === 0) return null;  // extent too small
+
+  // Create position set with all computed values
+  const { id, name } = newPositionSetId();
+  addPositionSet(ydoc, yBounPos, yBounPosMeta,
+    { id, name, snapRadius, genType, genParam, x, y, w, h, circles, author });
+
+  return { id, name, genType };
+}
+
 // ── Unified CRDT operations ───────────────────────────────────────────────────
 
 export function findEl(yBounPos, id) {
