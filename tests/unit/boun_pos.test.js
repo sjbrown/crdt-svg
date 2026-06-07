@@ -16,7 +16,7 @@ import {
   // Grid math
   generateSquareGrid, generateHexGrid, gridFillExtent, computeMaxSnapRadius,
   // CRDT
-  addBoundary, addPositionSet, findEl, deleteEl, renameBoundary, applyMoveCommit,
+  addBoundary, addPositionSet, findEl, deleteEl, renameBounPos, applyMoveCommit,
   // Layer API
   renderLayer, layerData,
   // Geometry queries
@@ -220,12 +220,12 @@ describe('deleteEl', () => {
   });
 });
 
-describe('renameBoundary', () => {
+describe('renameBounPos', () => {
   test('updates name attribute and meta', () => {
     const layer = makeLayer();
     const { id } = addB(layer);
     const yEl = findEl(layer.yBounPos, id);
-    renameBoundary(layer.ydoc, yEl, layer.yBounPosMeta, id, 'forest');
+    renameBounPos(layer.ydoc, yEl, layer.yBounPosMeta, id, 'forest');
     expect(yEl.getAttribute('name')).toBe('forest');
     expect(layer.yBounPosMeta.get(id).name).toBe('forest');
   });
@@ -334,7 +334,7 @@ describe('computePositionSnapPoints', () => {
     const { id, circles } = addPS(layer, { x: 0, y: 0, w: 400, h: 400, genType: 'square', genParam: 100 });
     // Set name to known value
     const yEl = findEl(layer.yBounPos, id);
-    renameBoundary(layer.ydoc, yEl, layer.yBounPosMeta, id, 'forest');
+    renameBounPos(layer.ydoc, yEl, layer.yBounPosMeta, id, 'forest');
     const pts = computePositionSnapPoints(layer.yBounPos, new Set(['forest']));
     expect(pts.length).toBe(circles.length);
     pts.forEach(p => {
