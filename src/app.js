@@ -41,8 +41,7 @@ import { SELECT_TOOL }                            from './tools-schema.js';
 import { TOOLS as DRAW_TOOLS, LAYER as DRAW_LAYER }  from './tools-drawing.js';
 import { TOOLS as BOUNPOS_TOOLS, LAYER as BOUNPOS_LAYER } from './tools-boun_pos.js';
 import { newBoundaryId, newPositionSetId, rectToPath, pathToRect,
-         addBoundary, addPositionSet,
-         commitPositionSet as bounPosCommitPositionSet,
+         addBoundary, addPositionSet, createPositionSetElement,
          findEl          as bounPosFindEl,
          deleteEl        as bounPosDeleteEl,
          renameBounPos,
@@ -558,7 +557,7 @@ const App = {
 
   commitPositionSet: ({ x, y, w, h, toolName }) => {
     const params = App.getToolParams(toolName);
-    const result = bounPosCommitPositionSet(_ydoc, _yBounPos, _yBounPosMeta,
+    const result = addPositionSet(_ydoc, _yBounPos, _yBounPosMeta,
       { x, y, w, h, toolName, toolParams: params, author: _myId });
 
     if (!result) return;  // extent too small
@@ -921,7 +920,7 @@ const App = {
           const genParam = Number(op.attrs['data-gen-param'] ?? 80);
           const snapRadius = Number(op.attrs['snap-radius'] ?? 30);
           const circles = gridFillExtent(x, y, w, h, genType, genParam);
-          addPositionSet(_ydoc, _yBounPos, _yBounPosMeta, {
+          createPositionSetElement(_ydoc, _yBounPos, _yBounPosMeta, {
             id: op.attrs.id, name: op.attrs.name ?? op.attrs.id,
             snapRadius, genType, genParam, x, y, w, h, circles, author: op.meta?.author,
           });

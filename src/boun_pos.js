@@ -192,7 +192,7 @@ export function addBoundary(ydoc, yBounPos, yBounPosMeta, { id, name, x, y, w, h
 
 // ── CRDT operations — position sets ──────────────────────────────────────────
 
-export function addPositionSet(ydoc, yBounPos, yBounPosMeta,
+export function createPositionSetElement(ydoc, yBounPos, yBounPosMeta,
   { id, name, snapRadius, genType, genParam, x, y, w, h, circles, author }) {
   const d  = rectToPath(x, y, w, h);
   const tx = x + w;
@@ -253,11 +253,11 @@ export function updatePositionSetSnapRadius(ydoc, yGEl, newRadius) {
 
 /**
  * Create a new position set from draw parameters.
- * Computes genType, genParam, snapRadius, and grid circles; calls addPositionSet.
+ * Computes genType, genParam, snapRadius, and grid circles; calls createPositionSetElement.
  * Returns { id, name, genType } or null if extent too small.
  * Call this from app.js commit handler; app handles undo/history/logs/selection.
  */
-export function commitPositionSet(ydoc, yBounPos, yBounPosMeta,
+export function addPositionSet(ydoc, yBounPos, yBounPosMeta,
   { x, y, w, h, toolName, toolParams, author }) {
   // Derive genType and genParam from toolName + toolParams
   const genType = toolName === 'pos-grid-hex' ? 'hex' : 'square';
@@ -275,7 +275,7 @@ export function commitPositionSet(ydoc, yBounPos, yBounPosMeta,
 
   // Create position set with all computed values
   const { id, name } = newPositionSetId();
-  addPositionSet(ydoc, yBounPos, yBounPosMeta,
+  createPositionSetElement(ydoc, yBounPos, yBounPosMeta,
     { id, name, snapRadius, genType, genParam, x, y, w, h, circles, author });
 
   return { id, name, genType };
